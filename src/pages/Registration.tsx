@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Button, Card, Typography, message, Spin } from 'antd';
-import { UserOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { UserOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { qrService, registrationService } from '../services/api';
 import { RegistrationData } from '../types';
@@ -17,10 +17,10 @@ export const Registration: React.FC = () => {
         if (!tokenId) {
             message.error('Invalid registration link');
         }
-        else{
+        else {
             qrService.consumeQr(tokenId);
         }
-    }, [tokenId]);
+    });
 
     const onFinish = async (values: RegistrationData) => {
         if (!tokenId) {
