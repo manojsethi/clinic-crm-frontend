@@ -128,50 +128,58 @@ export const RegistrationManagement: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2">Registration Management</Title>
-                    <Text type="secondary">View and manage patient registrations</Text>
+                    <Title level={2} className="mb-2 text-gray-800">Registration Management</Title>
+                    <Text type="secondary" className="text-gray-600">View and manage patient registrations</Text>
                 </div>
                 <Button
                     icon={<ReloadOutlined />}
                     onClick={fetchRegistrations}
                     loading={loading}
+                    className="border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-500"
                 >
                     Refresh
                 </Button>
             </div>
 
-            <Card>
-                <div className="mb-6">
-                    <Space wrap>
-                        <Input
-                            placeholder="Search by name or symptoms..."
-                            prefix={<SearchOutlined />}
-                            value={searchText}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            style={{ width: 300 }}
-                        />
-                        <RangePicker
-                            placeholder={['Start Date', 'End Date']}
-                            onChange={handleDateChange}
-                        />
-                        <Select
-                            placeholder="Filter by status"
-                            style={{ width: 150 }}
-                            allowClear
-                        >
-                            <Option value="today">Today</Option>
-                            <Option value="week">This Week</Option>
-                            <Option value="month">This Month</Option>
-                        </Select>
-                    </Space>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                <div className="mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative">
+                            <Input
+                                placeholder="Search by name or symptoms..."
+                                prefix={<SearchOutlined className="text-gray-400" />}
+                                value={searchText}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                className="h-10 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            />
+                        </div>
+                        <div>
+                            <RangePicker
+                                placeholder={['Start Date', 'End Date']}
+                                onChange={handleDateChange}
+                                className="h-10 w-full border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            />
+                        </div>
+                        <div>
+                            <Select
+                                placeholder="Filter by status"
+                                className="h-10 w-full border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                allowClear
+                            >
+                                <Option value="today">Today</Option>
+                                <Option value="week">This Week</Option>
+                                <Option value="month">This Month</Option>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
 
                 <Table
                     columns={columns}
-                    dataSource={filteredData}
+                    dataSource={[]}
                     rowKey="id"
                     loading={loading}
                     pagination={{

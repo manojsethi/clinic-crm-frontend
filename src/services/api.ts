@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { LoginRequest, LoginResponse, QRData, Registration, RegistrationData } from '../types';
 import { clearTokens, getAccessToken, getRefreshToken } from '../utils/token';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -76,7 +76,7 @@ export const authService = {
 
 export const qrService = {
     getQR: async (): Promise<QRData> => {
-        const response: AxiosResponse<QRData> = await api.get('/qr');
+        const response: AxiosResponse<QRData> = await api.get('/qr/generate');
         return response.data;
     },
 };

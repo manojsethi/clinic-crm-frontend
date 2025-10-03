@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Typography, Spin } from 'antd';
 import { QrcodeOutlined } from '@ant-design/icons';
+import { QRCodeSVG } from 'qrcode.react';
 
 const { Title, Text } = Typography;
 
@@ -24,7 +25,6 @@ export const QRDisplay: React.FC<QRDisplayProps> = ({
                 <Title level={3} className="mb-2">{title}</Title>
                 <Text type="secondary" className="block mb-4">{description}</Text>
             </div>
-
             <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 min-h-[200px] flex items-center justify-center">
                 {isLoading ? (
                     <div className="text-center">
@@ -32,11 +32,11 @@ export const QRDisplay: React.FC<QRDisplayProps> = ({
                         <Text className="block mt-2">Generating QR Code...</Text>
                     </div>
                 ) : qrCode ? (
-                    <div className="w-full">
-                        <img
-                            src={qrCode}
-                            alt="QR Code"
-                            className="w-full h-auto max-w-[200px] mx-auto"
+                    <div className="">
+                        <QRCodeSVG
+                            value={qrCode}
+                            size={250}
+                            level="H"
                         />
                     </div>
                 ) : (
@@ -46,6 +46,8 @@ export const QRDisplay: React.FC<QRDisplayProps> = ({
                     </div>
                 )}
             </div>
+
+
         </Card>
     );
 };

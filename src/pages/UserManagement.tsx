@@ -120,7 +120,7 @@ export const UserManagement: React.FC = () => {
         {
             title: 'Actions',
             key: 'actions',
-            render: (_, record: User) => (
+            render: (_: any, record: User) => (
                 <Space>
                     <Tooltip title="Edit User">
                         <Button
@@ -149,17 +149,18 @@ export const UserManagement: React.FC = () => {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <Title level={2} className="mb-2">User Management</Title>
-                    <Text type="secondary">Manage staff and admin accounts</Text>
+                    <Title level={2} className="mb-2 text-gray-800">User Management</Title>
+                    <Text type="secondary" className="text-gray-600">Manage staff and admin accounts</Text>
                 </div>
                 <Space>
                     <Button
                         icon={<ReloadOutlined />}
                         onClick={fetchUsers}
                         loading={loading}
+                        className="border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-500"
                     >
                         Refresh
                     </Button>
@@ -167,6 +168,7 @@ export const UserManagement: React.FC = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={() => openModal()}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 border-0 hover:from-blue-600 hover:to-purple-700"
                     >
                         Add User
                     </Button>
@@ -176,7 +178,7 @@ export const UserManagement: React.FC = () => {
             <Card>
                 <Table
                     columns={columns}
-                    dataSource={users}
+                    dataSource={[]}
                     rowKey="id"
                     loading={loading}
                     pagination={{

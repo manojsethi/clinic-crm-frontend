@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Registration } from './pages/Registration';
+import { QRScanner } from './pages/QRScanner';
 import { Dashboard } from './pages/Dashboard';
 import { RegistrationManagement } from './pages/RegistrationManagement';
 import { UserManagement } from './pages/UserManagement';
@@ -49,6 +50,12 @@ function App() {
                 <Layout>
                   <RegistrationManagement />
                 </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/scan" element={
+              <ProtectedRoute>
+                <QRScanner />
               </ProtectedRoute>
             } />
 

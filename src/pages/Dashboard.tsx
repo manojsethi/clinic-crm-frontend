@@ -51,16 +51,17 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <Title level={2} className="mb-2">Clinic Dashboard</Title>
-                    <Text type="secondary">Manage patient registrations and QR codes</Text>
+                    <Title level={2} className="mb-2 text-gray-800">Clinic Dashboard</Title>
+                    <Text type="secondary" className="text-gray-600">Manage patient registrations and QR codes</Text>
                 </div>
                 <Space>
                     <Button
                         icon={<ReloadOutlined />}
                         onClick={handleRefresh}
                         loading={refreshing}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 border-0 text-white hover:from-blue-600 hover:to-purple-700"
                     >
                         Refresh QR
                     </Button>
@@ -88,32 +89,38 @@ export const Dashboard: React.FC = () => {
 
                 <Col xs={24} lg={8}>
                     <Space direction="vertical" size="large" className="w-full">
-                        <Card>
+                        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
                             <Statistic
                                 title="Connection Status"
                                 value={isConnected ? 'Connected' : 'Disconnected'}
-                                valueStyle={{ color: isConnected ? '#3f8600' : '#cf1322' }}
-                                prefix={isConnected ? <QrcodeOutlined /> : <QrcodeOutlined />}
+                                valueStyle={{ color: isConnected ? '#10b981' : '#ef4444' }}
+                                prefix={<div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>}
                             />
                         </Card>
 
-                        <Card>
+                        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
                             <Statistic
                                 title="QR Status"
                                 value={qrData?.valid ? 'Valid' : 'Invalid'}
-                                valueStyle={{ color: qrData?.valid ? '#3f8600' : '#cf1322' }}
-                                prefix={<ClockCircleOutlined />}
+                                valueStyle={{ color: qrData?.valid ? '#10b981' : '#ef4444' }}
+                                prefix={<ClockCircleOutlined className="text-blue-500" />}
                             />
                         </Card>
 
-                        <Card>
+                        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
                             <div className="text-center">
-                                <UserOutlined className="text-4xl text-blue-500 mb-2" />
-                                <Title level={4} className="mb-1">Quick Actions</Title>
-                                <Text type="secondary" className="block mb-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <UserOutlined className="text-white text-xl" />
+                                </div>
+                                <Title level={4} className="mb-1 text-gray-800">Quick Actions</Title>
+                                <Text type="secondary" className="block mb-4 text-gray-600">
                                     Manage your clinic operations
                                 </Text>
-                                <Button type="primary" block>
+                                <Button
+                                    type="primary"
+                                    block
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 border-0 hover:from-purple-600 hover:to-pink-600"
+                                >
                                     View Registrations
                                 </Button>
                             </div>

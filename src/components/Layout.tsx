@@ -6,7 +6,8 @@ import {
     TeamOutlined,
     LogoutOutlined,
     MenuFoldOutlined,
-    MenuUnfoldOutlined
+    MenuUnfoldOutlined,
+    QrcodeOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -36,6 +37,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             label: 'Dashboard',
         },
         {
+            key: '/scan',
+            icon: <QrcodeOutlined />,
+            label: 'QR Scanner',
+        },
+        {
             key: '/registrations',
             icon: <UserOutlined />,
             label: 'Registrations',
@@ -57,38 +63,97 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     ];
 
     return (
-        <AntLayout className="min-h-screen">
+        <AntLayout style={{ minHeight: '100vh' }}>
             <Sider
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
-                className="bg-white shadow-lg"
+                width={200}
+                style={{
+                    background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+                    boxShadow: '4px 0 24px rgba(0, 0, 0, 0.05)',
+                    borderRight: '1px solid #e2e8f0'
+                }}
             >
-                <div className="p-4 text-center border-b">
-                    <Text strong className="text-lg">🏥 Clinic CRM</Text>
+                <div style={{
+                    padding: '16px',
+                    textAlign: 'center',
+                    borderBottom: '1px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px'
+                }}>
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                    }}>
+                        🏥
+                    </div>
+                    {!collapsed && (
+                        <Text strong style={{ color: '#1e293b', fontSize: '16px' }}>
+                            Clinic CRM
+                        </Text>
+                    )}
                 </div>
                 <Menu
                     mode="inline"
                     selectedKeys={[location.pathname]}
                     items={menuItems}
                     onClick={({ key }) => navigate(key)}
-                    className="border-0"
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        height: 'calc(100vh - 80px)',
+                        overflowY: 'auto'
+                    }}
                 />
             </Sider>
 
             <AntLayout>
-                <Header className="bg-white shadow-sm flex items-center justify-between px-6">
+                <Header style={{
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    borderBottom: '1px solid #e2e8f0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 24px',
+                    height: '64px'
+                }}>
                     <Button
                         type="text"
                         icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                         onClick={() => setCollapsed(!collapsed)}
-                        className="text-lg"
+                        style={{
+                            color: '#64748b',
+                            fontSize: '18px',
+                            background: 'transparent',
+                            border: 'none'
+                        }}
                     />
 
-                    <div className="flex items-center space-x-4">
-                        <Text className="text-sm text-gray-600">
-                            Welcome, {user?.username}
-                        </Text>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '8px',
+                                height: '8px',
+                                background: '#10b981',
+                                borderRadius: '50%',
+                                animation: 'pulse 2s infinite'
+                            }}></div>
+                            <Text style={{ color: '#64748b', fontSize: '14px' }}>
+                                Welcome, <span style={{ fontWeight: '600', color: '#1e293b' }}>{user?.username}</span>
+                            </Text>
+                        </div>
                         <Dropdown
                             menu={{ items: userMenuItems }}
                             placement="bottomRight"
@@ -96,13 +161,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         >
                             <Avatar
                                 icon={<UserOutlined />}
-                                className="cursor-pointer hover:bg-blue-100"
+                                style={{
+                                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                                    cursor: 'pointer'
+                                }}
                             />
                         </Dropdown>
                     </div>
                 </Header>
 
-                <Content className="p-6 bg-gray-50 min-h-screen">
+                <Content style={{
+                    background: '#f8fafc',
+                    padding: '24px',
+                    minHeight: 'calc(100vh - 64px)',
+                    overflowY: 'auto'
+                }}>
                     {children}
                 </Content>
             </AntLayout>
