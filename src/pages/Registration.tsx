@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Button, Card, Typography, message, Spin } from 'antd';
 import { UserOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
-import { registrationService } from '../services/api';
+import { qrService, registrationService } from '../services/api';
 import { RegistrationData } from '../types';
 
 const { Title, Text } = Typography;
@@ -16,6 +16,9 @@ export const Registration: React.FC = () => {
     useEffect(() => {
         if (!tokenId) {
             message.error('Invalid registration link');
+        }
+        else{
+            qrService.consumeQr(tokenId);
         }
     }, [tokenId]);
 

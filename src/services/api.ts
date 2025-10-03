@@ -79,6 +79,14 @@ export const qrService = {
         const response: AxiosResponse<QRData> = await api.get('/qr/generate');
         return response.data;
     },
+    getCurrentQR: async (): Promise<QRData> => {
+        const response: AxiosResponse<QRData> = await api.get('/qr/current');
+        return response.data;
+    },
+    consumeQr: async (qr:string): Promise<QRData> => {
+        const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}`);
+        return response.data;
+    },
 };
 
 export const registrationService = {

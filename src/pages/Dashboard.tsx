@@ -17,7 +17,7 @@ export const Dashboard: React.FC = () => {
     const fetchQR = async () => {
         try {
             setLoading(true);
-            const data = await qrService.getQR();
+            const data = await qrService.getCurrentQR();
             setQrData(data);
         } catch (error: any) {
             message.error('Failed to fetch QR code');
