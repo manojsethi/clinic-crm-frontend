@@ -14,22 +14,22 @@ export const Dashboard: React.FC = () => {
     const [refreshing, setRefreshing] = useState(false);
     const { qr: socketQr, isConnected } = useSocket();
 
-    const fetchQR = async () => {
-        try {
-            setLoading(true);
-            const data = await qrService.getCurrentQR();
-            setQrData(data);
-        } catch (error: any) {
-            message.error('Failed to fetch QR code');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // const fetchQR = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const data = await qrService.getCurrentQR();
+    //         setQrData(data);
+    //     } catch (error: any) {
+    //         message.error('Failed to fetch QR code');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const handleRefresh = async () => {
         try {
             setRefreshing(true);
-            await fetchQR();
+            // await fetchQR();
             message.success('QR Code refreshed!');
         } catch (error) {
             message.error('Failed to refresh QR code');
@@ -38,9 +38,9 @@ export const Dashboard: React.FC = () => {
         }
     };
 
-    useEffect(() => {
-        fetchQR();
-    }, []);
+    // useEffect(() => {
+    //     fetchQR();
+    // }, []);
 
     // Update QR when socket receives new data
     useEffect(() => {
@@ -78,12 +78,7 @@ export const Dashboard: React.FC = () => {
                             </Text>
                         </div>
 
-                        <QRDisplay
-                            qrCode={qrData?.token || ''}
-                            isLoading={loading}
-                            title="Patient Registration QR"
-                            description="Patients can scan this QR code to register"
-                        />
+                     
                     </Card>
                 </Col>
 

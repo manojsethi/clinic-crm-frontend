@@ -3,6 +3,7 @@ import { Card, Typography, Button, Form, Select, message } from "antd";
 import { PlayCircleOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { adminService, deviceDoctorMappingService } from "../services/api";
+import { useSocket } from "../hooks/useSocket";
 import { Device, User } from "../types";
 import { useRegistrationContext } from "../context/RegistrationContext";
 
@@ -15,11 +16,12 @@ export const QRScanner: React.FC = () => {
   const [doctors, setDoctors] = useState<User[]>([]);
   const [mappingLoading, setMappingLoading] = useState(false);
   const [form] = Form.useForm();
+  const { socket, isConnected } = useSocket();
 
   const fetchDevicesAndDoctors = async () => {
     try {
       const [devicesResponse, doctorsResponse] = await Promise.all([
-        adminService.getDevices(),
+        adminService.getDevices({ }),
         adminService.getUsers({ role: "doctor" }),
       ]);
 
@@ -34,6 +36,30 @@ export const QRScanner: React.FC = () => {
   useEffect(() => {
     fetchDevicesAndDoctors();
   }, []);
+
+  // Live refresh devices list based on socket availability events
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleInUse = async () => {
+      try {
+        const resp = await adminService.getDevices();
+        setDevices(resp.devices);
+      } catch (e) {
+        // silent
+      }
+    };
+
+    const handleAvailable = handleInUse;
+
+    socket.on('DEVICE_IN_USE', handleInUse);
+    socket.on('DEVICE_AVAILABLE', handleAvailable);
+
+    return () => {
+      socket.off('DEVICE_IN_USE', handleInUse);
+      socket.off('DEVICE_AVAILABLE', handleAvailable);
+    };
+  }, [socket, isConnected]);
 
   const handleOpenRegistration = async (values: {
     deviceId: string;

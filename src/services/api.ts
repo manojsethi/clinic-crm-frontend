@@ -95,16 +95,25 @@ export const authService = {
 };
 
 export const qrService = {
-  getQR: async (): Promise<QRData> => {
-    const response: AxiosResponse<QRData> = await api.get("/qr/generate");
+  getQR: async (deviceId?: string, doctorId?: string): Promise<QRData> => {
+    const params = new URLSearchParams();
+    if (deviceId) params.append('deviceId', deviceId);
+    if (doctorId) params.append('doctorId', doctorId);
+    
+    const response: AxiosResponse<QRData> = await api.get(`/qr/generate?${params.toString()}`);
     return response.data;
   },
   getCurrentQR: async (): Promise<QRData> => {
     const response: AxiosResponse<QRData> = await api.get("/qr/current");
     return response.data;
   },
-  consumeQr: async (qr: string): Promise<QRData> => {
-    const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}`);
+  consumeQr: async (qr: string, deviceId?: string, doctorId?: string, roomId?: string): Promise<QRData> => {
+    const params = new URLSearchParams();
+    if (deviceId) params.append('deviceId', deviceId);
+    if (doctorId) params.append('doctorId', doctorId);
+    if (roomId) params.append('roomId', roomId);
+    
+    const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}?${params.toString()}`);
     return response.data;
   },
 };
@@ -157,7 +166,7 @@ export const adminService = {
   },
 
   // Devices CRUD
-  getDevices: async (params?: { page?: number; limit?: number }): Promise<any> => {
+  getDevices: async (params?: { page?: number; limit?: number; onlyAvailable?: boolean }): Promise<any> => {
     const response: AxiosResponse<DeviceResult> = await api.get(
       `/admin/devices`,
       { params }

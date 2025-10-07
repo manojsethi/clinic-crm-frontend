@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Form, Input, InputNumber, Button, Card, Typography, message, Spin } from 'antd';
 import { UserOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
@@ -12,15 +12,16 @@ export const Registration: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searchParams] = useSearchParams();
     const tokenId = searchParams.get('token');
+    const deviceId = searchParams.get('deviceId');
+    const doctorId = searchParams.get('doctorId');
+    const roomId = searchParams.get('roomId');
+    const consumedRef = useRef(false);
 
     useEffect(() => {
-        if (!tokenId) {
-            message.error('Invalid registration link');
-        }
-        else {
-            qrService.consumeQr(tokenId);
-        }
-    });
+      if (!tokenId || consumedRef.current) return;
+      consumedRef.current = true;
+      qrService.consumeQr(tokenId, deviceId || undefined, doctorId || undefined, roomId || undefined);
+    }, [tokenId, deviceId, doctorId, roomId]);
 
     const onFinish = async (values: RegistrationData) => {
         if (!tokenId) {
