@@ -50,6 +50,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             key: '/users',
             icon: <TeamOutlined />,
             label: 'User Management',
+        },{
+            key: '/devices',
+            icon: <TeamOutlined />,
+            label: 'Devices',
         }] : []),
     ];
 
