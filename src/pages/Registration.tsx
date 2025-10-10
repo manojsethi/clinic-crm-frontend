@@ -45,6 +45,52 @@ export const Registration: React.FC = () => {
   const { socket } = useSocket();
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
+<<<<<<< HEAD
+=======
+
+  // Validate token on page load
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!tokenId) {
+        setValidatingToken(false);
+        setTokenValid(false);
+        return;
+      }
+
+      try {
+        const tokenValidation = await qrService.validateToken(tokenId);
+        setTokenValid(tokenValidation.token?.tokenInfo?.valid);
+
+        // Always try to fetch existing registration data, regardless of token validity
+        try {
+          const registration = await registrationService.getRegistrationByToken(tokenId);
+          setExistingRegistration(registration);
+          console.log("Found existing registration:", registration);
+        } catch (error) {
+          console.log("No existing registration found for token");
+          setExistingRegistration(null);
+        }
+      } catch (error) {
+        console.error("Token validation error:", error);
+        setTokenValid(false);
+        
+        // Even if token validation fails, try to fetch existing registration
+        try {
+          const registration = await registrationService.getRegistrationByToken(tokenId);
+          setExistingRegistration(registration);
+          console.log("Found existing registration despite token validation failure:", registration);
+        } catch (regError) {
+          console.log("No existing registration found");
+          setExistingRegistration(null);
+        }
+      } finally {
+        setValidatingToken(false);
+      }
+    };
+
+    validateToken();
+  }, [tokenId]);
+>>>>>>> backup
 
   // Listen for device available event to clear registration context
   useEffect(() => {
