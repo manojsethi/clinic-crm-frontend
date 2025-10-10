@@ -7,7 +7,6 @@ import {
   Space,
   Button,
   DatePicker,
-  Select,
   Input,
   message,
 } from "antd";
@@ -25,7 +24,6 @@ import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 export const RegistrationManagement: React.FC = () => {
   const { user } = useAuth();

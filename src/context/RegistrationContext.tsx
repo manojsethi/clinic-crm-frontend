@@ -5,11 +5,13 @@ interface RegistrationContextType {
   doctorId: string | null;
   deviceName: string | null;
   doctorName: string | null;
+  roomId: string | null;
   setRegistrationContext: (data: {
     deviceId: string;
     doctorId: string;
     deviceName: string;
     doctorName: string;
+    roomId?: string;
   }) => void;
   clearRegistrationContext: () => void;
 }
@@ -33,17 +35,20 @@ export const RegistrationProvider: React.FC<RegistrationProviderProps> = ({ chil
   const [doctorId, setDoctorId] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [doctorName, setDoctorName] = useState<string | null>(null);
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   const setRegistrationContext = (data: {
     deviceId: string;
     doctorId: string;
     deviceName: string;
     doctorName: string;
+    roomId?: string;
   }) => {
     setDeviceId(data.deviceId);
     setDoctorId(data.doctorId);
     setDeviceName(data.deviceName);
     setDoctorName(data.doctorName);
+    setRoomId(data.roomId || null);
   };
 
   const clearRegistrationContext = () => {
@@ -51,6 +56,7 @@ export const RegistrationProvider: React.FC<RegistrationProviderProps> = ({ chil
     setDoctorId(null);
     setDeviceName(null);
     setDoctorName(null);
+    setRoomId(null);
   };
 
   return (
@@ -60,6 +66,7 @@ export const RegistrationProvider: React.FC<RegistrationProviderProps> = ({ chil
         doctorId,
         deviceName,
         doctorName,
+        roomId,
         setRegistrationContext,
         clearRegistrationContext,
       }}

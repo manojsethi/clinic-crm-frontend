@@ -45,52 +45,6 @@ export const Registration: React.FC = () => {
   const { socket } = useSocket();
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
-  const deviceId = searchParams.get("deviceId");
-  const doctorId = searchParams.get("doctorId");
-  const roomId = searchParams.get("roomId");
-
-  // Validate token on page load
-  useEffect(() => {
-    const validateToken = async () => {
-      if (!tokenId) {
-        setValidatingToken(false);
-        setTokenValid(false);
-        return;
-      }
-
-      try {
-        const tokenValidation = await qrService.validateToken(tokenId);
-        setTokenValid(tokenValidation.token?.tokenInfo?.valid);
-
-        // Always try to fetch existing registration data, regardless of token validity
-        try {
-          const registration = await registrationService.getRegistrationByToken(tokenId);
-          setExistingRegistration(registration);
-          console.log("Found existing registration:", registration);
-        } catch (error) {
-          console.log("No existing registration found for token");
-          setExistingRegistration(null);
-        }
-      } catch (error) {
-        console.error("Token validation error:", error);
-        setTokenValid(false);
-        
-        // Even if token validation fails, try to fetch existing registration
-        try {
-          const registration = await registrationService.getRegistrationByToken(tokenId);
-          setExistingRegistration(registration);
-          console.log("Found existing registration despite token validation failure:", registration);
-        } catch (regError) {
-          console.log("No existing registration found");
-          setExistingRegistration(null);
-        }
-      } finally {
-        setValidatingToken(false);
-      }
-    };
-
-    validateToken();
-  }, [tokenId]);
 
   // Listen for device available event to clear registration context
   useEffect(() => {
@@ -149,12 +103,7 @@ export const Registration: React.FC = () => {
 
         // Consume QR token after successful registration
         try {
-          await qrService.consumeQr(
-            tokenId,
-            deviceId || undefined,
-            doctorId || undefined,
-            roomId || undefined
-          );
+          await qrService.consumeQr(tokenId);
         } catch (qrError: any) {
           console.error("QR consumption failed:", qrError);
           // Don't fail the registration if QR consumption fails
@@ -178,13 +127,16 @@ export const Registration: React.FC = () => {
           );
 
           notification.success({
-            message: response.msg || "Registration information updated successfully!",
+            message:
+              response.msg || "Registration information updated successfully!",
           });
-          
+
           // Redirect to home page
           navigate("/");
         } catch (error: any) {
-          message.error(error.response?.data?.msg || "Failed to update registration");
+          message.error(
+            error.response?.data?.msg || "Failed to update registration"
+          );
         }
       } else {
         // Token is invalid and no existing registration, still try to create registration
@@ -203,9 +155,10 @@ export const Registration: React.FC = () => {
         } catch (error: any) {
           // If registration creation fails due to invalid token, show a different message
           notification.warning({
-            message: "Information submitted. Please contact the clinic for further assistance.",
+            message:
+              "Information submitted. Please contact the clinic for further assistance.",
           });
-          
+
           // Redirect to home page
           navigate("/");
         }
@@ -217,6 +170,66 @@ export const Registration: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+  const validateToken = async () => {
+    if (!tokenId) {
+      setValidatingToken(false);
+      setTokenValid(false);
+      return;
+    }
+
+    try {
+      const tokenValidation = await qrService.validateToken(tokenId);
+      const isValid = tokenValidation.token?.tokenInfo?.valid;
+      setTokenValid(isValid);
+
+      // 🔒 Consume token immediately if valid
+      if (isValid) {
+        try {
+          console.log("✅ Token valid — consuming QR immediately...");
+          await qrService.consumeQr(tokenId);
+          console.log("🔒 Token successfully consumed on page load");
+        } catch (consumeErr) {
+          console.error("⚠️ QR consumption failed on page load:", consumeErr);
+        }
+      }
+
+      // Fetch existing registration data (regardless of token validity)
+      try {
+        const registration =
+          await registrationService.getRegistrationByToken(tokenId);
+        setExistingRegistration(registration);
+        console.log("Found existing registration:", registration);
+      } catch (error) {
+        console.log("No existing registration found for token");
+        setExistingRegistration(null);
+      }
+    } catch (error) {
+      console.error("Token validation error:", error);
+      setTokenValid(false);
+
+      // Even if token validation fails, try to fetch registration
+      try {
+        const registration =
+          await registrationService.getRegistrationByToken(tokenId);
+        setExistingRegistration(registration);
+        console.log(
+          "Found existing registration despite token validation failure:",
+          registration
+        );
+      } catch {
+        console.log("No existing registration found");
+        setExistingRegistration(null);
+      }
+    } finally {
+      setValidatingToken(false);
+    }
+  };
+
+  validateToken();
+}, [tokenId]);
+
+
   // Show loading state while validating token
   if (validatingToken) {
     return (
@@ -226,7 +239,9 @@ export const Registration: React.FC = () => {
           <Title level={3} className="mb-2">
             Validating Link
           </Title>
-          <Text type="secondary">Please wait while we validate your registration link...</Text>
+          <Text type="secondary">
+            Please wait while we validate your registration link...
+          </Text>
         </Card>
       </div>
     );
@@ -242,10 +257,9 @@ export const Registration: React.FC = () => {
             Invalid Link
           </Title>
           <Text type="secondary">
-            {!tokenId 
-              ? "This registration link is not valid." 
-              : "This registration link has expired or is invalid."
-            }
+            {!tokenId
+              ? "This registration link is not valid."
+              : "This registration link has expired or is invalid."}
           </Text>
         </Card>
       </div>
@@ -264,24 +278,25 @@ export const Registration: React.FC = () => {
             {tokenValid ? "Patient Registration" : "Registration Information"}
           </Title>
           <Text className="text-gray-600">
-            {tokenValid 
+            {tokenValid
               ? "Please provide your information to complete registration"
-              : existingRegistration 
-                ? "Your registration has been completed. You can view and edit your information below."
-                : "Please provide your information to complete registration"
-            }
+              : existingRegistration
+              ? "Your registration has been completed. You can view and edit your information below."
+              : "Please provide your information to complete registration"}
           </Text>
           {!tokenValid && existingRegistration && (
             <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
               <Text className="text-green-700 text-sm">
-                ✅ Registration completed on {new Date(existingRegistration.createdAt).toLocaleDateString()}
+                ✅ Registration completed on{" "}
+                {new Date(existingRegistration.createdAt).toLocaleDateString()}
               </Text>
             </div>
           )}
           {!tokenValid && !existingRegistration && (
             <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
               <Text className="text-yellow-700 text-sm">
-                ⚠️ This registration link has expired, but you can still provide your information
+                ⚠️ This registration link has expired, but you can still provide
+                your information
               </Text>
             </div>
           )}
@@ -296,18 +311,23 @@ export const Registration: React.FC = () => {
             scrollToFirstError
             className="p-4"
             initialValues={
-              existingRegistration ? {
-                name: existingRegistration.name,
-                age: existingRegistration.age,
-                sex: existingRegistration.sex,
-                dob: existingRegistration.dob ? dayjs(existingRegistration.dob) : undefined,
-                address: existingRegistration.address,
-                contactNumber: existingRegistration.contactNumber,
-                email: existingRegistration.email,
-                allergies: existingRegistration.allergies,
-                currentMedicalIllness: existingRegistration.currentMedicalIllness,
-                symptoms: existingRegistration.symptoms,
-              } : undefined
+              existingRegistration
+                ? {
+                    name: existingRegistration.name,
+                    age: existingRegistration.age,
+                    sex: existingRegistration.sex,
+                    dob: existingRegistration.dob
+                      ? dayjs(existingRegistration.dob)
+                      : undefined,
+                    address: existingRegistration.address,
+                    contactNumber: existingRegistration.contactNumber,
+                    email: existingRegistration.email,
+                    allergies: existingRegistration.allergies,
+                    currentMedicalIllness:
+                      existingRegistration.currentMedicalIllness,
+                    symptoms: existingRegistration.symptoms,
+                  }
+                : undefined
             }
           >
             {/* Patient Information Section */}
@@ -341,7 +361,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <Input
-                    size="large"
+                      size="large"
                       prefix={<UserOutlined className="text-gray-400" />}
                       placeholder="Enter your full name"
                     />
@@ -359,7 +379,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <DatePicker
-                    size="large"
+                      size="large"
                       className="w-full"
                       placeholder="Select date of birth"
                       format="YYYY-MM-DD"
@@ -394,8 +414,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <InputNumber
-                                        size="large"
-
+                      size="large"
                       className="!w-full"
                       placeholder="Enter your age"
                       min={1}
@@ -406,7 +425,6 @@ export const Registration: React.FC = () => {
               </Row>
 
               <Row gutter={12}>
-                
                 <Col span={8}>
                   <Form.Item
                     name="sex"
@@ -435,8 +453,7 @@ export const Registration: React.FC = () => {
               </div>
 
               <Row gutter={12}>
-                
-                   <Col span={8}>
+                <Col span={8}>
                   <Form.Item
                     name="contactNumber"
                     label="Contact Number"
@@ -495,7 +512,7 @@ export const Registration: React.FC = () => {
                     />
                   </Form.Item>
                 </Col>
-                 <Col span={8}>
+                <Col span={8}>
                   <Form.Item
                     name="email"
                     label="Email Address"
@@ -515,7 +532,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <Input
-                    size="large"
+                      size="large"
                       prefix={<MailOutlined className="text-gray-400" />}
                       placeholder="Enter your email address"
                     />
@@ -546,7 +563,6 @@ export const Registration: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
             </div>
 
             {/* Medical Information Section */}
@@ -674,10 +690,10 @@ export const Registration: React.FC = () => {
                 {loading
                   ? "Processing..."
                   : tokenValid
-                    ? "Complete Registration"
-                    : existingRegistration
-                      ? "Update Information"
-                      : "Submit Information"}
+                  ? "Complete Registration"
+                  : existingRegistration
+                  ? "Update Information"
+                  : "Submit Information"}
               </Button>
             </Form.Item>
           </Form>

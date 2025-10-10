@@ -1,8 +1,6 @@
-import { Button, Form, Input, Select, Space } from "antd";
+import { Button, Form, Input, Space } from "antd";
 import { useForm } from "antd/es/form/Form";
-import { Device, DeviceRequest, User } from "../../types";
-import { useEffect, useState } from "react";
-import { adminService } from "../../services/api";
+import { Device, DeviceRequest } from "../../types";
 
 const DeviceForm = ({
   handleOnSubmit,
@@ -18,19 +16,6 @@ const DeviceForm = ({
   initialValues?: Partial<Device>;
 }) => {
   const [form] = useForm();
-  const [doctors, setDoctors] = useState<User[]>([]);
-
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const data = await adminService.getUsers({ role: "doctor" });
-        setDoctors(data.users || []);
-      } catch (e) {
-        setDoctors([]);
-      }
-    };
-    fetchDoctors();
-  }, []);
 
   return (
     <Form
@@ -45,7 +30,7 @@ const DeviceForm = ({
         rules={[
           { required: true, message: "Please input device ID!" },
           { min: 1, message: "Device ID cannot be empty!" },
-          { max: 50, message: "Device ID cannot exceed 50 characters!" }
+          { max: 50, message: "Device ID cannot exceed 50 characters!" },
         ]}
       >
         <Input placeholder="Enter unique device ID" maxLength={50} />
@@ -59,7 +44,6 @@ const DeviceForm = ({
         <Input placeholder="Enter device name" />
       </Form.Item>
 
-    
       <Form.Item className="mb-0">
         <Space className="w-full justify-end">
           <Button onClick={handleOnCancel}>Cancel</Button>
@@ -73,5 +57,3 @@ const DeviceForm = ({
 };
 
 export default DeviceForm;
-
-

@@ -19,7 +19,7 @@ const { Title, Text } = Typography;
 
 export const RegistrationSetup: React.FC = () => {
   const navigate = useNavigate();
-  const { deviceId, doctorId } = useRegistrationContext();
+  const { deviceId, doctorId, deviceName, doctorName, setRegistrationContext } = useRegistrationContext();
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [loading, setLoading] = useState(true);
   const [composedQR, setComposedQR] = useState<string>("");
@@ -84,6 +84,20 @@ export const RegistrationSetup: React.FC = () => {
     }
   }, [isConnected, deviceId, doctorId, currentRoom, joinDeviceDoctorRoom]);
 
+  // Update registration context with roomId when currentRoom changes
+  useEffect(() => {
+    if (currentRoom && deviceId && doctorId && deviceName && doctorName) {
+      // Update the registration context to include roomId
+      setRegistrationContext({
+        deviceId,
+        doctorId,
+        deviceName,
+        doctorName,
+        roomId: currentRoom
+      });
+    }
+  }, [currentRoom, deviceId, doctorId, deviceName, doctorName, setRegistrationContext]);
+
   // Fallback timeout to clear loading if QR setup takes too long
   useEffect(() => {
     if (loading && deviceId && doctorId) {
@@ -129,20 +143,14 @@ export const RegistrationSetup: React.FC = () => {
     }
   }, [currentRoom, qrData?.token, socketQr]);
 
-  // Compose QR with device, doctor and this screen's unique room
+  // Compose QR with only token - device, doctor, room info will be retrieved from token
   useEffect(() => {
     const currentToken = qrData?.token || socketQr || "";
-    console.log("🔧 Composing QR with:", { currentToken: !!currentToken, deviceId, doctorId, currentRoom });
+    console.log("🔧 Composing QR with token only:", { currentToken: !!currentToken });
     
-    if (currentToken && deviceId && doctorId && currentRoom) {
-      // Prefer dev tunnel on localhost, else current origin
-      
-      // Use this screen's unique room so only this screen updates
-      const url = `http://localhost:5173/register?token=${encodeURIComponent(
-        currentToken
-      )}&deviceId=${encodeURIComponent(deviceId)}&doctorId=${encodeURIComponent(
-        doctorId
-      )}&roomId=${encodeURIComponent(currentRoom)}`;
+    if (currentToken) {
+      // Generate URL with only token parameter
+      const url = `http://localhost:5173/register?token=${encodeURIComponent(currentToken)}`;
       
       console.log("✅ Setting composed QR URL:", url);
       setComposedQR(url);
@@ -153,9 +161,9 @@ export const RegistrationSetup: React.FC = () => {
         setLoading(false);
       }
     } else {
-      console.log("❌ Cannot compose QR - missing data:", { currentToken: !!currentToken, deviceId, doctorId, currentRoom });
+      console.log("❌ Cannot compose QR - missing token");
     }
-  }, [qrData, socketQr, deviceId, doctorId, currentRoom, loading]);
+  }, [qrData, socketQr, loading]);
 
   const handleManualEntry = () => {
     const token = prompt("Please enter your registration token:");
