@@ -37,8 +37,21 @@ export const useSocket = () => {
         });
 
         newSocket.on('NEW_QR', (data: SocketEventData) => {
-            if (data.roomId && data.roomId === currentRoomRef.current) {
+            console.log('📡 [FRONTEND] Received NEW_QR event:', { 
+                roomId: data.roomId, 
+                currentRoom: currentRoomRef.current,
+                hasQR: !!data.qr 
+            });
+            
+            // Update QR if:
+            // 1. No roomId specified (broadcast to all)
+            // 2. RoomId matches current room
+            // 3. We're in a room and this is a room-specific update
+            if (!data.roomId || data.roomId === currentRoomRef.current) {
+                console.log('✅ [FRONTEND] Updating QR from socket event');
                 setQr(data.qr);
+            } else {
+                console.log('❌ [FRONTEND] Ignoring QR update - room mismatch');
             }
         });
 
@@ -52,6 +65,11 @@ export const useSocket = () => {
                 setCurrentRoom(null);
                 currentRoomRef.current = null;
             }
+        });
+
+        newSocket.on('DEVICE_AVAILABLE', (data: { deviceId: string }) => {
+            console.log('📡 [FRONTEND] Device available event received:', data.deviceId);
+            // This event will be handled by components that need to clear device-doctor mapping
         });
 
         setSocket(newSocket);

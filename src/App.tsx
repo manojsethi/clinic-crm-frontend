@@ -15,6 +15,7 @@ import { QRScanner } from "./pages/QRScanner";
 import { RegistrationSetup } from "./pages/RegistrationSetup";
 import { Dashboard } from "./pages/Dashboard";
 import { RegistrationManagement } from "./pages/RegistrationManagement";
+import { RegistrationDetail } from "./pages/RegistrationDetail";
 import { UserManagement } from "./pages/UserManagement";
 import "./App.css";
 import Devices from "./pages/Devices";
@@ -66,6 +67,17 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <RegistrationManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/registration-detail/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <RegistrationDetail />
                   </Layout>
                 </ProtectedRoute>
               }

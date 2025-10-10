@@ -36,17 +36,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             icon: <DashboardOutlined />,
             label: 'Dashboard',
         },
-        {
-            key: '/scan',
-            icon: <QrcodeOutlined />,
-            label: 'QR Scanner',
-        },
+       
         {
             key: '/registrations',
             icon: <UserOutlined />,
             label: 'Registrations',
         },
-        ...(user?.role === 'admin' ? [{
+        ...(user?.role === 'admin' ? [ {
+            key: '/scan',
+            icon: <QrcodeOutlined />,
+            label: 'QR Scanner',
+        },{
             key: '/users',
             icon: <TeamOutlined />,
             label: 'User Management',

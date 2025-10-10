@@ -10,6 +10,7 @@ import {
   DeviceResult,
   CreateMappingRequest,
   MappingResult,
+  Pagination,
 } from "../types";
 import { clearTokens, getAccessToken, getRefreshToken } from "../utils/token";
 
@@ -107,6 +108,10 @@ export const qrService = {
     const response: AxiosResponse<QRData> = await api.get("/qr/current");
     return response.data;
   },
+  validateToken: async (tokenId: string): Promise<{ msg: string; valid: boolean; token?: any }> => {
+    const response: AxiosResponse<{ msg: string; valid: boolean; token?: any }> = await api.get(`/qr/validate/${tokenId}`);
+    return response.data;
+  },
   consumeQr: async (qr: string, deviceId?: string, doctorId?: string, roomId?: string): Promise<QRData> => {
     const params = new URLSearchParams();
     if (deviceId) params.append('deviceId', deviceId);
@@ -122,17 +127,39 @@ export const registrationService = {
   createRegistration: async (
     tokenId: string,
     data: RegistrationData
-  ): Promise<Registration> => {
-    const response: AxiosResponse<Registration> = await api.post(
+  ): Promise<{ msg: string; registration: Registration }> => {
+    const response: AxiosResponse<{ msg: string; registration: Registration }> = await api.post(
       `/registration/${tokenId}`,
       data
     );
     return response.data;
   },
+  getRegistrationByToken: async (tokenId: string): Promise<Registration> => {
+    const response: AxiosResponse<Registration> = await api.get(`/registration/token/${tokenId}`);
+    return response.data;
+  },
+  updateRegistrationByToken: async (
+    tokenId: string,
+    data: RegistrationData
+  ): Promise<{ msg: string; registration: Registration }> => {
+    const response: AxiosResponse<{ msg: string; registration: Registration }> = await api.put(
+      `/registration/token/${tokenId}`,
+      data
+    );
+    return response.data;
+  },
 
-  getRegistrations: async (): Promise<Registration[]> => {
-    const response: AxiosResponse<Registration[]> = await api.get(
-      "/registration"
+  getRegistrations: async (params?: { 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    startDate?: string; 
+    endDate?: string; 
+    status?: string; 
+  }): Promise<{ registrations: Registration[]; pagination: Pagination }> => {
+    const response: AxiosResponse<{ registrations: Registration[]; pagination: Pagination }> = await api.get(
+      "/registration",
+      { params }
     );
     return response.data;
   },
@@ -140,6 +167,21 @@ export const registrationService = {
   getRegistrationById: async (id: string): Promise<Registration> => {
     const response: AxiosResponse<Registration> = await api.get(
       `/registration/${id}`
+    );
+    return response.data;
+  },
+
+  getRegistrationsByDoctor: async (doctorId: string, params?: { 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    startDate?: string; 
+    endDate?: string; 
+    status?: string; 
+  }): Promise<{ registrations: Registration[]; pagination: Pagination }> => {
+    const response: AxiosResponse<{ registrations: Registration[]; pagination: Pagination }> = await api.get(
+      `/registration/doctor/${doctorId}`,
+      { params }
     );
     return response.data;
   },
@@ -212,8 +254,8 @@ export const deviceDoctorMappingService = {
   },
 
   endMapping: async (deviceId: string): Promise<MappingResult> => {
-    const response: AxiosResponse<MappingResult> = await api.put(
-      `/device-doctor-mapping/device/${deviceId}/end`
+    const response: AxiosResponse<MappingResult> = await api.delete(
+      `/device-doctor-mapping/${deviceId}`
     );
     return response.data;
   },

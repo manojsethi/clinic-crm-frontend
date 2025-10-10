@@ -1,197 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Card, Typography, Tag, Space, Button, DatePicker, Select, Input, message, Spin } from 'antd';
-import { UserOutlined, SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
-import { registrationService } from '../services/api';
-import { Registration } from '../types';
-import dayjs from 'dayjs';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Table,
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  DatePicker,
+  Select,
+  Input,
+  message,
+} from "antd";
+import {
+  UserOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { registrationService } from "../services/api";
+import { Registration } from "../types";
+import { useAuth } from "../context/AuthContext";
+import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 export const RegistrationManagement: React.FC = () => {
-    const [registrations, setRegistrations] = useState<Registration[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filteredData, setFilteredData] = useState<Registration[]>([]);
-    const [searchText, setSearchText] = useState('');
-    const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(
+    null
+  );
 
-    const fetchRegistrations = async () => {
-        try {
-            setLoading(true);
-            const data = await registrationService.getRegistrations();
-            setRegistrations(data);
-            setFilteredData(data);
-        } catch (error: any) {
-            message.error('Failed to fetch registrations');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const debounceRef = useRef<any | null>(null);
 
-    useEffect(() => {
-        fetchRegistrations();
-    }, []);
+  const fetchRegistrations = async (
+    search = "",
+    dates?: [dayjs.Dayjs, dayjs.Dayjs]
+  ) => {
+    try {
+      setLoading(true);
+      let response;
+      const obj = {
+        search,
+        ...(dates &&
+          dates?.length > 0 && {
+            startDate: dates?.[0].toString() ?? "",
+            endDate: dates?.[1].toString() ?? "",
+          }),
+      };
 
-    const handleSearch = (value: string) => {
-        setSearchText(value);
-        filterData(value, dateRange);
-    };
+      if (user?.role === "doctor") {
+        response = await registrationService.getRegistrationsByDoctor(
+          user.id,
+          obj
+        );
+      } else {
+        response = await registrationService.getRegistrations(obj);
+      }
 
-    const handleDateChange = (dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
-        setDateRange(dates);
-        filterData(searchText, dates);
-    };
+      setRegistrations(response.registrations);
+    } catch (error: any) {
+      message.error("Failed to fetch registrations");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const filterData = (search: string, dates: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
-        let filtered = registrations;
+  useEffect(() => {
+    if (user) fetchRegistrations();
+  }, [user]);
 
-        if (search) {
-            filtered = filtered.filter(reg =>
-                reg.name.toLowerCase().includes(search.toLowerCase()) ||
-                reg.symptoms?.toLowerCase().includes(search.toLowerCase())
-            );
-        }
+  const handleSearch = (value: string) => {
+    setSearchText(value);
 
-        if (dates) {
-            const [start, end] = dates;
-            filtered = filtered.filter(reg => {
-                const regDate = dayjs(reg.createdAt);
-                return regDate.isAfter(start) && regDate.isBefore(end);
-            });
-        }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-        setFilteredData(filtered);
-    };
+    debounceRef.current = setTimeout(() => {
+      fetchRegistrations(value, dateRange ?? undefined);
+    }, 500);
+  };
 
-    const columns = [
-        {
-            title: 'Name',
-            dataIndex: 'name',
-            key: 'name',
-            render: (text: string) => (
-                <Space>
-                    <UserOutlined />
-                    <Text strong>{text}</Text>
-                </Space>
-            ),
-        },
-        {
-            title: 'Age',
-            dataIndex: 'age',
-            key: 'age',
-            render: (age: number) => <Tag color="blue">{age} years</Tag>,
-        },
-        {
-            title: 'Symptoms',
-            dataIndex: 'symptoms',
-            key: 'symptoms',
-            render: (symptoms: string) => (
-                <Text type="secondary">
-                    {symptoms || 'No symptoms provided'}
-                </Text>
-            ),
-        },
-        {
-            title: 'Registration Date',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date: string) => (
-                <Space direction="vertical" size={0}>
-                    <Text>{dayjs(date).format('MMM DD, YYYY')}</Text>
-                    <Text type="secondary" className="text-xs">
-                        {dayjs(date).format('h:mm A')}
-                    </Text>
-                </Space>
-            ),
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, record: Registration) => (
-                <Space>
-                    <Button
-                        icon={<EyeOutlined />}
-                        size="small"
-                        onClick={() => handleViewDetails(record)}
-                    >
-                        View
-                    </Button>
-                </Space>
-            ),
-        },
-    ];
+  const handleDateChange = (dates: any) => {
+    setDateRange(dates);
+    fetchRegistrations(searchText, dates ?? undefined);
+  };
 
-    const handleViewDetails = (registration: Registration) => {
-        // This would typically open a modal with detailed information
-        message.info(`Viewing details for ${registration.name}`);
-    };
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (text: string) => (
+        <Space>
+          <UserOutlined />
+          <Text strong>{text}</Text>
+        </Space>
+      ),
+    },
+    {
+      title: "Age",
+      dataIndex: "age",
+      key: "age",
+      render: (age: number) => <Tag color="blue">{age} years</Tag>,
+    },
+    {
+      title: "Symptoms",
+      dataIndex: "symptoms",
+      key: "symptoms",
+      render: (symptoms: string) => (
+        <Text type="secondary">{symptoms || "No symptoms provided"}</Text>
+      ),
+    },
+    {
+      title: "Registration Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date: string) => (
+        <Space direction="vertical" size={0}>
+          <Text>{dayjs(date).format("MMM DD, YYYY")}</Text>
+          <Text type="secondary" className="text-xs">
+            {dayjs(date).format("h:mm A")}
+          </Text>
+        </Space>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_: any, record: Registration) => (
+        <Button
+          icon={<EyeOutlined />}
+          size="small"
+          onClick={() => navigate(`/registration-detail/${record._id}`)}
+        >
+          View
+        </Button>
+      ),
+    },
+  ];
 
-    return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <Title level={2} className="mb-2 text-gray-800">Registration Management</Title>
-                    <Text type="secondary" className="text-gray-600">View and manage patient registrations</Text>
-                </div>
-                <Button
-                    icon={<ReloadOutlined />}
-                    onClick={fetchRegistrations}
-                    loading={loading}
-                    className="border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-500"
-                >
-                    Refresh
-                </Button>
-            </div>
-
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-                <div className="mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="relative">
-                            <Input
-                                placeholder="Search by name or symptoms..."
-                                prefix={<SearchOutlined className="text-gray-400" />}
-                                value={searchText}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                className="h-10 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                            />
-                        </div>
-                        <div>
-                            <RangePicker
-                                placeholder={['Start Date', 'End Date']}
-                                onChange={handleDateChange}
-                                className="h-10 w-full border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                            />
-                        </div>
-                        <div>
-                            <Select
-                                placeholder="Filter by status"
-                                className="h-10 w-full border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                allowClear
-                            >
-                                <Option value="today">Today</Option>
-                                <Option value="week">This Week</Option>
-                                <Option value="month">This Month</Option>
-                            </Select>
-                        </div>
-                    </div>
-                </div>
-
-                <Table
-                    columns={columns}
-                    dataSource={[]}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} of ${total} registrations`,
-                    }}
-                    scroll={{ x: 800 }}
-                />
-            </Card>
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <Title level={2} className="mb-2 text-gray-800">
+            {user?.role === "doctor"
+              ? "My Patient Registrations"
+              : "Registration Management"}
+          </Title>
+          <Text type="secondary">
+            {user?.role === "doctor"
+              ? "View your patient registrations"
+              : "View and manage patient registrations"}
+          </Text>
         </div>
-    );
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={() => fetchRegistrations(searchText, dateRange ?? undefined)}
+          loading={loading}
+        >
+          Refresh
+        </Button>
+      </div>
+
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <Input
+            placeholder="Search by name or symptoms..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <RangePicker onChange={handleDateChange} />
+         
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={registrations}
+          rowKey="_id"
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showQuickJumper: true,
+            showTotal: (total) => `${total} registrations`,
+          }}
+        />
+      </Card>
+    </div>
+  );
 };

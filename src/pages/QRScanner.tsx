@@ -67,10 +67,12 @@ export const QRScanner: React.FC = () => {
   }) => {
     try {
       setMappingLoading(true);
-
+  const selectedDevice = devices.find(
+           (d) => d.deviceId === values.deviceId
+         );
       // Create device-doctor mapping
       const mappingResult = await deviceDoctorMappingService.createMapping({
-        deviceId: values.deviceId,
+        deviceId: selectedDevice?._id.toString()??"",
         doctorId: values.doctorId,
         notes: `Registration session started at ${new Date().toLocaleString()}`,
       });
@@ -79,17 +81,25 @@ export const QRScanner: React.FC = () => {
          message.success("Device-Doctor mapping created successfully!");
 
          // Set registration context with device and doctor info
-         const selectedDevice = devices.find(
-           (d) => d.deviceId === values.deviceId
-         );
+       
          const selectedDoctor = doctors.find((d) => d._id === values.doctorId);
 
          setRegistrationContext({
-           deviceId: values.deviceId,
+           deviceId: selectedDevice?._id.toString()??"",
            doctorId: values.doctorId,
            deviceName: selectedDevice?.deviceName || "",
            doctorName: selectedDoctor?.username || "",
          });
+
+         // Store the QR token for use in registration
+         if (mappingResult.data?.qrToken) {
+           console.log("🎯 QR Token generated and stored:", mappingResult.data.qrToken);
+           // You can store this token in localStorage or context for later use
+           localStorage.setItem('currentQrToken', mappingResult.data.qrToken);
+           console.log("💾 Token stored in localStorage");
+         } else {
+           console.log("❌ No QR token received from mapping result");
+         }
 
          // Navigate to registration setup page
          navigate("/registration-setup");

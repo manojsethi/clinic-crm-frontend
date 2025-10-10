@@ -15,9 +15,23 @@ export interface LoginResponse {
 }
 
 export interface RegistrationData {
+  // Patient Information
   name: string;
   age: number;
+  sex: 'Male' | 'Female' | 'Other';
+  dob?: string;
+  
+  // Contact Information
+  address?: string;
+  contactNumber?: string;
+  email?: string;
+  
+  // Medical Information
+  allergies?: string;
+  currentMedicalIllness?: string;
   symptoms?: string;
+  
+  // Legacy fields for backward compatibility
   deviceId?: string;
   doctorId?: string;
   deviceName?: string;
@@ -43,12 +57,47 @@ export interface Pagination {
 }
 
 export interface Registration {
-  id: string;
-  tokenId: string;
+  _id: string;
+  tokenId: any;
+  // Patient Information
   name: string;
   age: number;
+  sex: 'Male' | 'Female' | 'Other';
+  dob?: string;
+
+  // Contact Information
+  address?: string;
+  contactNumber?: string;
+  email?: string;
+
+  // Medical Information
+  allergies?: string;
+  currentMedicalIllness?: string;
   symptoms?: string;
+
+  // Legacy fields for backward compatibility
+  deviceId?: any;
+  doctorId?: any;
   createdAt: string;
+}
+
+export interface PopulatedRegistration extends Registration {
+  deviceId: {
+    _id: string;
+    deviceName: string;
+    roomName?: string;
+  };
+  doctorId: {
+    _id: string;
+    username: string;
+    role: string;
+  };
+  tokenId: {
+    _id: string;
+    token: string;
+    createdAt: string;
+    consumedAt?: string;
+  };
 }
 
 export interface QRData {
@@ -130,5 +179,6 @@ export interface MappingResult {
   data?: {
     mapping?: DeviceDoctorMapping;
     mappings?: DeviceDoctorMapping[];
+    qrToken?: string;
   };
 }

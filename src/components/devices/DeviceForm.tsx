@@ -44,14 +44,11 @@ const DeviceForm = ({
         label="Device ID"
         rules={[
           { required: true, message: "Please input device ID!" },
-          {
-            pattern: /^DEV-[A-Z0-9]{8}$/i,
-            message:
-              "Invalid deviceId format. Expected 'DEV-XXXXXXXX' (alphanumeric).",
-          },
+          { min: 1, message: "Device ID cannot be empty!" },
+          { max: 50, message: "Device ID cannot exceed 50 characters!" }
         ]}
       >
-        <Input placeholder="DEV-XXXXXXXX" maxLength={12} />
+        <Input placeholder="Enter unique device ID" maxLength={50} />
       </Form.Item>
 
       <Form.Item
