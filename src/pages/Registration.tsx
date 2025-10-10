@@ -45,9 +45,6 @@ export const Registration: React.FC = () => {
   const { socket } = useSocket();
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
-  const deviceId = searchParams.get("deviceId");
-  const doctorId = searchParams.get("doctorId");
-  const roomId = searchParams.get("roomId");
 
   // Validate token on page load
   useEffect(() => {
@@ -149,12 +146,7 @@ export const Registration: React.FC = () => {
 
         // Consume QR token after successful registration
         try {
-          await qrService.consumeQr(
-            tokenId,
-            deviceId || undefined,
-            doctorId || undefined,
-            roomId || undefined
-          );
+          await qrService.consumeQr(tokenId);
         } catch (qrError: any) {
           console.error("QR consumption failed:", qrError);
           // Don't fail the registration if QR consumption fails

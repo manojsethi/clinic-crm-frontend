@@ -1,8 +1,7 @@
-import { Button, Form, Input, Select, Space } from "antd";
+import { Button, Form, Input, Space } from "antd";
 import { useForm } from "antd/es/form/Form";
-import { Device, DeviceRequest, User } from "../../types";
-import { useEffect, useState } from "react";
-import { adminService } from "../../services/api";
+import { Device, DeviceRequest } from "../../types";
+
 
 const DeviceForm = ({
   handleOnSubmit,
@@ -18,19 +17,6 @@ const DeviceForm = ({
   initialValues?: Partial<Device>;
 }) => {
   const [form] = useForm();
-  const [doctors, setDoctors] = useState<User[]>([]);
-
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const data = await adminService.getUsers({ role: "doctor" });
-        setDoctors(data.users || []);
-      } catch (e) {
-        setDoctors([]);
-      }
-    };
-    fetchDoctors();
-  }, []);
 
   return (
     <Form

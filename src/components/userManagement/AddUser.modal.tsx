@@ -1,5 +1,5 @@
 import { Modal } from "antd";
-import React, { useState } from "react";
+import { useState } from "react";
 import UserManagementForm from "./Form";
 import { adminService } from "../../services/api";
 import useApp from "antd/es/app/useApp";

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, Statistic, Row, Col, message } from 'antd';
 import { ReloadOutlined, UserOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { QRDisplay } from '../components/QRDisplay';
 import { useSocket } from '../hooks/useSocket';
-import { qrService } from '../services/api';
+
 import { QRData } from '../types';
 
 const { Title, Text } = Typography;
 
 export const Dashboard: React.FC = () => {
     const [qrData, setQrData] = useState<QRData | null>(null);
-    const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const { qr: socketQr, isConnected } = useSocket();
 
