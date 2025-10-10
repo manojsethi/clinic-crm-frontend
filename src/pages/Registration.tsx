@@ -45,8 +45,6 @@ export const Registration: React.FC = () => {
   const { socket } = useSocket();
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
-<<<<<<< HEAD
-=======
 
   // Validate token on page load
   useEffect(() => {
@@ -90,7 +88,6 @@ export const Registration: React.FC = () => {
 
     validateToken();
   }, [tokenId]);
->>>>>>> backup
 
   // Listen for device available event to clear registration context
   useEffect(() => {
