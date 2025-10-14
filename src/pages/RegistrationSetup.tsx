@@ -169,7 +169,7 @@ export const RegistrationSetup: React.FC = () => {
     if (currentToken) {
       // Generate URL with only token parameter
       const url = `${
-        import.meta.env.REACT_APP_CLINIC_CLIENT_URL
+        import.meta.env.VITE_CLINIC_CLIENT_URL
       }/register?token=${encodeURIComponent(currentToken)}`;
 
       console.log("✅ Setting composed QR URL:", url);

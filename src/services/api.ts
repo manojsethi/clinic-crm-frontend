@@ -14,7 +14,7 @@ import {
 } from "../types";
 import { clearTokens, getAccessToken, getRefreshToken } from "../utils/token";
 
-const API_BASE_URL = `${import.meta.env.REACT_APP_CLINIC_BACKEND_URL}/api`;
+const API_BASE_URL = `${import.meta.env.VITE_CLINIC_BACKEND_URL}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

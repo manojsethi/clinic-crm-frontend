@@ -23,7 +23,7 @@ export const useSocket = () => {
 
     useEffect(() => {
        
-        const newSocket = io(import.meta.env.REACT_APP_CLINIC_BACKEND_URL, {
+        const newSocket = io(import.meta.env.VITE_CLINIC_BACKEND_URL, {
             transports: ['websocket'],
         });
 
