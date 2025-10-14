@@ -19,7 +19,8 @@ const { Title, Text } = Typography;
 
 export const RegistrationSetup: React.FC = () => {
   const navigate = useNavigate();
-  const { deviceId, doctorId, deviceName, doctorName, setRegistrationContext } = useRegistrationContext();
+  const { deviceId, doctorId, deviceName, doctorName, setRegistrationContext } =
+    useRegistrationContext();
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [loading, setLoading] = useState(true);
   const [composedQR, setComposedQR] = useState<string>("");
@@ -36,19 +37,24 @@ export const RegistrationSetup: React.FC = () => {
     try {
       setLoading(true);
       if (!deviceId || !doctorId) {
-        message.error("Device and Doctor information is required to generate QR code");
+        message.error(
+          "Device and Doctor information is required to generate QR code"
+        );
         return;
       }
 
       // First, try to get the existing QR token from localStorage (generated during device-doctor mapping)
-      const existingToken = localStorage.getItem('currentQrToken');
+      const existingToken = localStorage.getItem("currentQrToken");
       console.log("🔍 Checking for existing token:", existingToken);
       if (existingToken) {
-        console.log("✅ Using existing QR token from device-doctor mapping:", existingToken);
+        console.log(
+          "✅ Using existing QR token from device-doctor mapping:",
+          existingToken
+        );
         setQrData({
           token: existingToken,
           valid: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         });
         // Don't clear loading here - let the QR composition useEffect handle it
         return;
@@ -79,7 +85,10 @@ export const RegistrationSetup: React.FC = () => {
   // Auto-join room when connected and have device/doctor info
   useEffect(() => {
     if (isConnected && deviceId && doctorId && !currentRoom) {
-      console.log("🔗 Auto-joining device-doctor room:", { deviceId, doctorId });
+      console.log("🔗 Auto-joining device-doctor room:", {
+        deviceId,
+        doctorId,
+      });
       joinDeviceDoctorRoom(deviceId, doctorId);
     }
   }, [isConnected, deviceId, doctorId, currentRoom, joinDeviceDoctorRoom]);
@@ -93,10 +102,17 @@ export const RegistrationSetup: React.FC = () => {
         doctorId,
         deviceName,
         doctorName,
-        roomId: currentRoom
+        roomId: currentRoom,
       });
     }
-  }, [currentRoom, deviceId, doctorId, deviceName, doctorName, setRegistrationContext]);
+  }, [
+    currentRoom,
+    deviceId,
+    doctorId,
+    deviceName,
+    doctorName,
+    setRegistrationContext,
+  ]);
 
   // Fallback timeout to clear loading if QR setup takes too long
   useEffect(() => {
@@ -105,18 +121,15 @@ export const RegistrationSetup: React.FC = () => {
         console.log("⏰ QR setup timeout - clearing loading state");
         setLoading(false);
       }, 10000);
-      
+
       return () => clearTimeout(timeout);
     }
   }, [loading, deviceId, doctorId]);
 
- 
-
-
   // Retry room join if not connected after a delay
   useEffect(() => {
     if (!deviceId || !doctorId || !isConnected || currentRoom) return;
-    
+
     const timer = setTimeout(() => {
       if (!currentRoom) {
         console.log("🔄 Retrying room join after delay");
@@ -124,7 +137,7 @@ export const RegistrationSetup: React.FC = () => {
         setLastJoinAttemptAt(Date.now());
       }
     }, 2000);
-    
+
     return () => clearTimeout(timer);
   }, [deviceId, doctorId, isConnected, currentRoom, joinDeviceDoctorRoom]);
 
@@ -138,7 +151,10 @@ export const RegistrationSetup: React.FC = () => {
   // When room is joined, ensure QR is composed if we have a token
   useEffect(() => {
     if (currentRoom && (qrData?.token || socketQr)) {
-      console.log("🏠 Room joined, ensuring QR is composed:", { currentRoom, hasToken: !!(qrData?.token || socketQr) });
+      console.log("🏠 Room joined, ensuring QR is composed:", {
+        currentRoom,
+        hasToken: !!(qrData?.token || socketQr),
+      });
       // The QR composition useEffect will handle this automatically
     }
   }, [currentRoom, qrData?.token, socketQr]);
@@ -146,15 +162,19 @@ export const RegistrationSetup: React.FC = () => {
   // Compose QR with only token - device, doctor, room info will be retrieved from token
   useEffect(() => {
     const currentToken = qrData?.token || socketQr || "";
-    console.log("🔧 Composing QR with token only:", { currentToken: !!currentToken });
-    
+    console.log("🔧 Composing QR with token only:", {
+      currentToken: !!currentToken,
+    });
+
     if (currentToken) {
       // Generate URL with only token parameter
-      const url = `http://localhost:5173/register?token=${encodeURIComponent(currentToken)}`;
-      
+      const url = `${
+        import.meta.env.REACT_APP_CLINIC_CLIENT_URL
+      }/register?token=${encodeURIComponent(currentToken)}`;
+
       console.log("✅ Setting composed QR URL:", url);
       setComposedQR(url);
-      
+
       // Clear loading state when QR is composed
       if (loading) {
         console.log("🔄 Clearing loading state - QR composed");
@@ -174,17 +194,23 @@ export const RegistrationSetup: React.FC = () => {
 
   const handleBack = async () => {
     // Clear the stored QR token when going back
-    localStorage.removeItem('currentQrToken');
+    localStorage.removeItem("currentQrToken");
     // Clear device-doctor mapping when going back
     if (deviceId) {
       try {
-        console.log('🧹 Clearing device-doctor mapping on back navigation for device:', deviceId);
+        console.log(
+          "🧹 Clearing device-doctor mapping on back navigation for device:",
+          deviceId
+        );
         await deviceDoctorMappingService.endMapping(deviceId);
       } catch (error) {
-        console.error('Error clearing device mapping on back navigation:', error);
+        console.error(
+          "Error clearing device mapping on back navigation:",
+          error
+        );
       }
     }
-    
+
     navigate("/scan");
   };
 
@@ -307,9 +333,11 @@ export const RegistrationSetup: React.FC = () => {
               {!loading && !composedQR && (
                 <div className="mt-3 text-center">
                   <Text type="secondary">
-                    {!isConnected ? "Connecting to server…" : 
-                     !currentRoom ? "Setting up secure room…" : 
-                     "Preparing QR code…"}
+                    {!isConnected
+                      ? "Connecting to server…"
+                      : !currentRoom
+                      ? "Setting up secure room…"
+                      : "Preparing QR code…"}
                   </Text>
                   <div className="mt-2">
                     <Button
@@ -329,9 +357,11 @@ export const RegistrationSetup: React.FC = () => {
                         }
                       }}
                     >
-                      {!isConnected ? "Retry connection" : 
-                       !currentRoom ? "Retry room setup" : 
-                       "Retry QR generation"}
+                      {!isConnected
+                        ? "Retry connection"
+                        : !currentRoom
+                        ? "Retry room setup"
+                        : "Retry QR generation"}
                     </Button>
                   </div>
                 </div>
