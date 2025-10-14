@@ -23,7 +23,7 @@ export const useSocket = () => {
 
     useEffect(() => {
        
-        const newSocket = io('http://localhost:8000', {
+        const newSocket = io(import.meta.env.VITE_CLINIC_BACKEND_URL, {
             transports: ['websocket'],
         });
 
