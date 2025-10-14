@@ -2,6 +2,7 @@ import { Button, Form, Input, Space } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { Device, DeviceRequest } from "../../types";
 
+
 const DeviceForm = ({
   handleOnSubmit,
   handleOnCancel,
@@ -30,7 +31,7 @@ const DeviceForm = ({
         rules={[
           { required: true, message: "Please input device ID!" },
           { min: 1, message: "Device ID cannot be empty!" },
-          { max: 50, message: "Device ID cannot exceed 50 characters!" },
+          { max: 50, message: "Device ID cannot exceed 50 characters!" }
         ]}
       >
         <Input placeholder="Enter unique device ID" maxLength={50} />
@@ -44,6 +45,7 @@ const DeviceForm = ({
         <Input placeholder="Enter device name" />
       </Form.Item>
 
+    
       <Form.Item className="mb-0">
         <Space className="w-full justify-end">
           <Button onClick={handleOnCancel}>Cancel</Button>
@@ -57,3 +59,5 @@ const DeviceForm = ({
 };
 
 export default DeviceForm;
+
+
