@@ -40,18 +40,16 @@ export const useSocket = () => {
             console.log('📡 [FRONTEND] Received NEW_QR event:', { 
                 roomId: data.roomId, 
                 currentRoom: currentRoomRef.current,
-                hasQR: !!data.qr 
+                hasQR: !!data.qr,
+                qrValue: data.qr
             });
             
-            // Update QR if:
-            // 1. No roomId specified (broadcast to all)
-            // 2. RoomId matches current room
-            // 3. We're in a room and this is a room-specific update
-            if (!data.roomId || data.roomId === currentRoomRef.current) {
-                console.log('✅ [FRONTEND] Updating QR from socket event');
+            // Update QR ONLY if roomId matches current room (room-based targeting)
+            if (data.roomId && data.roomId === currentRoomRef.current) {
+                console.log('✅ [FRONTEND] Updating QR from socket event - room match, setting QR to:', data.qr);
                 setQr(data.qr);
             } else {
-                console.log('❌ [FRONTEND] Ignoring QR update - room mismatch');
+                console.log('❌ [FRONTEND] Ignoring QR update - room mismatch or no roomId');
             }
         });
 
@@ -105,9 +103,11 @@ export const useSocket = () => {
         }
     }, [socket, isConnected, currentRoom]);
 
-    const consumeQR = useCallback((tokenId: string) => {
+    const consumeQR = useCallback((tokenId: string, roomId?: string) => {
         if (socket && isConnected) {
-            socket.emit('CONSUME_QR', { tokenId, roomId: currentRoom || undefined });
+            const finalRoomId = roomId || currentRoom || undefined;
+            console.log('🔍 [SOCKET] Consuming QR with roomId:', finalRoomId);
+            socket.emit('CONSUME_QR', { tokenId, roomId: finalRoomId });
         }
     }, [socket, isConnected, currentRoom]);
 

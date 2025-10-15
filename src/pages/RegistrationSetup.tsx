@@ -143,27 +143,33 @@ export const RegistrationSetup: React.FC = () => {
     }
   }, [currentRoom, qrData?.token, socketQr]);
 
-  // Compose QR with only token - device, doctor, room info will be retrieved from token
+  // Compose QR with token and roomId for proper room-based targeting
   useEffect(() => {
     const currentToken = qrData?.token || socketQr || "";
-    console.log("🔧 Composing QR with token only:", { currentToken: !!currentToken });
+    console.log("🔧 Composing QR with token and roomId:", { 
+      currentToken: !!currentToken, 
+      currentRoom: !!currentRoom 
+    });
     
-    if (currentToken) {
-      // Generate URL with only token parameter
-      const url = `http://localhost:5173/register?token=${encodeURIComponent(currentToken)}`;
+    if (currentToken && currentRoom) {
+      // Generate URL with both token and roomId parameters
+      const url = `http://localhost:5173/register?token=${encodeURIComponent(currentToken)}&roomId=${encodeURIComponent(currentRoom)}`;
       
-      console.log("✅ Setting composed QR URL:", url);
+      console.log("✅ Setting composed QR URL with roomId:", url);
       setComposedQR(url);
       
       // Clear loading state when QR is composed
       if (loading) {
-        console.log("🔄 Clearing loading state - QR composed");
+        console.log("🔄 Clearing loading state - QR composed with roomId");
         setLoading(false);
       }
     } else {
-      console.log("❌ Cannot compose QR - missing token");
+      console.log("❌ Cannot compose QR - missing token or roomId:", { 
+        hasToken: !!currentToken, 
+        hasRoom: !!currentRoom 
+      });
     }
-  }, [qrData, socketQr, loading]);
+  }, [qrData, socketQr, currentRoom, loading]);
 
   const handleManualEntry = () => {
     const token = prompt("Please enter your registration token:");

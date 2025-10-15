@@ -112,8 +112,12 @@ export const qrService = {
     const response: AxiosResponse<{ msg: string; valid: boolean; token?: any }> = await api.get(`/qr/validate/${tokenId}`);
     return response.data;
   },
-  consumeQr: async (qr: string): Promise<QRData> => {
-    const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}`);
+  consumeQr: async (qr: string, roomId?: string): Promise<QRData> => {
+    const params = new URLSearchParams();
+    if (roomId) params.append('roomId', roomId);
+    
+    console.log('🔍 [API] Consuming QR with params:', { qr, roomId, params: params.toString() });
+    const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}?${params.toString()}`);
     return response.data;
   },
 };
