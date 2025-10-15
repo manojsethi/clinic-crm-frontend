@@ -90,39 +90,25 @@ export const Registration: React.FC = () => {
     validateToken();
   }, [tokenId]);
 
-  // Join room and consume QR when page loads (this is when QR is "scanned")
+  // Join room when page loads (but don't consume QR yet)
   useEffect(() => {
-    const joinRoomAndConsumeQR = async () => {
-      if (!tokenId || !tokenValid || !socket) return;
+    const joinRoomIfNeeded = async () => {
+      if (!socket || !roomId) return;
       
       try {
-        // First join the room if roomId is provided
-        if (roomId) {
-          console.log("🏠 Joining room before consuming QR:", roomId);
-          joinRoom(roomId);
-          
-          // Wait a bit for room join to complete, then consume QR
-          setTimeout(() => {
-            console.log("🔄 Auto-consuming QR token via socket:", tokenId, "with roomId:", roomId);
-            socketConsumeQR(tokenId, roomId);
-            console.log("✅ QR consumption initiated via socket");
-          }, 500);
-        } else {
-          // If no roomId, just consume QR directly
-          console.log("🔄 Auto-consuming QR token via socket (no roomId):", tokenId);
-          socketConsumeQR(tokenId);
-          console.log("✅ QR consumption initiated via socket");
-        }
+        console.log("🏠 Joining room:", roomId);
+        joinRoom(roomId);
+        console.log("✅ Room joined successfully");
       } catch (error: any) {
-        console.error("❌ QR consumption failed:", error);
+        console.error("❌ Failed to join room:", error);
       }
     };
 
-    // Only consume QR when token is validated and socket is connected
-    if (tokenValid === true && socket) {
-      joinRoomAndConsumeQR();
+    // Join room when socket is connected and roomId is available
+    if (socket && roomId) {
+      joinRoomIfNeeded();
     }
-  }, [tokenValid, socket, tokenId, roomId, socketConsumeQR, joinRoom]);
+  }, [socket, roomId, joinRoom]);
 
   // Listen for device available event to clear registration context
   useEffect(() => {
@@ -184,6 +170,16 @@ export const Registration: React.FC = () => {
             response.msg ||
             "Registration successful! You will be called shortly.",
         });
+
+        // Consume QR to generate new one for the room
+        try {
+          console.log("🔄 Consuming QR after successful registration:", tokenId, "with roomId:", roomId);
+          socketConsumeQR(tokenId, roomId || undefined);
+          console.log("✅ QR consumption initiated after form submission");
+        } catch (qrError: any) {
+          console.error("❌ QR consumption failed after registration:", qrError);
+          // Don't show error to user as registration was successful
+        }
 
         // Redirect to home page after successful registration
         navigate("/");
