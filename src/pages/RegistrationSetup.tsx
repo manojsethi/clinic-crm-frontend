@@ -153,7 +153,7 @@ export const RegistrationSetup: React.FC = () => {
     
     if (currentToken && currentRoom) {
       // Generate URL with both token and roomId parameters
-      const url = `http://localhost:5173/register?token=${encodeURIComponent(currentToken)}&roomId=${encodeURIComponent(currentRoom)}`;
+      const url = `${import.meta.env.VITE_CLINIC_CLIENT_URL}/register?token=${encodeURIComponent(currentToken)}&roomId=${encodeURIComponent(currentRoom)}`;
       
       console.log("✅ Setting composed QR URL with roomId:", url);
       setComposedQR(url);
