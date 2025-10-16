@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
-  InputNumber,
   Button,
   Card,
   Typography,
@@ -34,11 +33,13 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 export const Registration: React.FC = () => {
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [validatingToken, setValidatingToken] = useState(true);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [existingRegistration, setExistingRegistration] = useState<any>(null);
   const [selectedCountry, setSelectedCountry] = useState<any>("in");
+  const [calculatedAge, setCalculatedAge] = useState<string>("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { notification } = useApp();
@@ -46,6 +47,30 @@ export const Registration: React.FC = () => {
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
   const roomId = searchParams.get("roomId");
+
+  // Function to calculate age from date of birth
+  const calculateAge = (dob: dayjs.Dayjs | null) => {
+    if (!dob) {
+      setCalculatedAge("");
+      return;
+    }
+    
+    const today = dayjs();
+    const age = today.diff(dob, 'year');
+    
+    if (age === 0) {
+      // If less than 1 year, show months
+      const months = today.diff(dob, 'month');
+      if (months === 0) {
+        const days = today.diff(dob, 'day');
+        setCalculatedAge(`${days} days old`);
+      } else {
+        setCalculatedAge(`${months} months old`);
+      }
+    } else {
+      setCalculatedAge(`${age} years old`);
+    }
+  };
 
   // Validate token on page load
   useEffect(() => {
@@ -62,7 +87,9 @@ export const Registration: React.FC = () => {
 
         // Always try to fetch existing registration data, regardless of token validity
         try {
-          const registration = await registrationService.getRegistrationByToken(tokenId);
+          const registration = await registrationService.getRegistrationByToken(
+            tokenId
+          );
           setExistingRegistration(registration);
           console.log("Found existing registration:", registration);
         } catch (error) {
@@ -72,12 +99,17 @@ export const Registration: React.FC = () => {
       } catch (error) {
         console.error("Token validation error:", error);
         setTokenValid(false);
-        
+
         // Even if token validation fails, try to fetch existing registration
         try {
-          const registration = await registrationService.getRegistrationByToken(tokenId);
+          const registration = await registrationService.getRegistrationByToken(
+            tokenId
+          );
           setExistingRegistration(registration);
-          console.log("Found existing registration despite token validation failure:", registration);
+          console.log(
+            "Found existing registration despite token validation failure:",
+            registration
+          );
         } catch (regError) {
           console.log("No existing registration found");
           setExistingRegistration(null);
@@ -94,7 +126,7 @@ export const Registration: React.FC = () => {
   useEffect(() => {
     const joinRoomIfNeeded = async () => {
       if (!socket || !roomId) return;
-      
+
       try {
         console.log("🏠 Joining room:", roomId);
         joinRoom(roomId);
@@ -109,6 +141,13 @@ export const Registration: React.FC = () => {
       joinRoomIfNeeded();
     }
   }, [socket, roomId, joinRoom]);
+
+  // Calculate age when existing registration data is loaded
+  useEffect(() => {
+    if (existingRegistration && existingRegistration.dob) {
+      calculateAge(dayjs(existingRegistration.dob));
+    }
+  }, [existingRegistration]);
 
   // Listen for device available event to clear registration context
   useEffect(() => {
@@ -143,7 +182,7 @@ export const Registration: React.FC = () => {
       const registrationData: RegistrationData = {
         // Patient Information
         name: values.name,
-        age: values.age,
+        age: values.dob ? dayjs().diff(values.dob, "year") : 0,
         sex: values.sex,
         dob: values.dob ? values.dob.format("YYYY-MM-DD") : undefined,
 
@@ -173,11 +212,19 @@ export const Registration: React.FC = () => {
 
         // Consume QR to generate new one for the room
         try {
-          console.log("🔄 Consuming QR after successful registration:", tokenId, "with roomId:", roomId);
+          console.log(
+            "🔄 Consuming QR after successful registration:",
+            tokenId,
+            "with roomId:",
+            roomId
+          );
           socketConsumeQR(tokenId, roomId || undefined);
           console.log("✅ QR consumption initiated after form submission");
         } catch (qrError: any) {
-          console.error("❌ QR consumption failed after registration:", qrError);
+          console.error(
+            "❌ QR consumption failed after registration:",
+            qrError
+          );
           // Don't show error to user as registration was successful
         }
 
@@ -192,13 +239,16 @@ export const Registration: React.FC = () => {
           );
 
           notification.success({
-            message: response.msg || "Registration information updated successfully!",
+            message:
+              response.msg || "Registration information updated successfully!",
           });
-          
+
           // Redirect to home page
           navigate("/");
         } catch (error: any) {
-          message.error(error.response?.data?.msg || "Failed to update registration");
+          message.error(
+            error.response?.data?.msg || "Failed to update registration"
+          );
         }
       } else {
         // Token is invalid and no existing registration, still try to create registration
@@ -217,9 +267,10 @@ export const Registration: React.FC = () => {
         } catch (error: any) {
           // If registration creation fails due to invalid token, show a different message
           notification.warning({
-            message: "Information submitted. Please contact the clinic for further assistance.",
+            message:
+              "Information submitted. Please contact the clinic for further assistance.",
           });
-          
+
           // Redirect to home page
           navigate("/");
         }
@@ -240,12 +291,13 @@ export const Registration: React.FC = () => {
           <Title level={3} className="mb-2">
             Validating Link
           </Title>
-          <Text type="secondary">Please wait while we validate your registration link...</Text>
+          <Text type="secondary">
+            Please wait while we validate your registration link...
+          </Text>
         </Card>
       </div>
     );
   }
-
 
   // Show error only if no token or no existing registration data
   if (!tokenId || (tokenValid === false && !existingRegistration)) {
@@ -257,10 +309,9 @@ export const Registration: React.FC = () => {
             Invalid Link
           </Title>
           <Text type="secondary">
-            {!tokenId 
-              ? "This registration link is not valid." 
-              : "This registration link has expired or is invalid."
-            }
+            {!tokenId
+              ? "This registration link is not valid."
+              : "This registration link has expired or is invalid."}
           </Text>
         </Card>
       </div>
@@ -279,24 +330,25 @@ export const Registration: React.FC = () => {
             {tokenValid ? "Patient Registration" : "Registration Information"}
           </Title>
           <Text className="text-gray-600">
-            {tokenValid 
+            {tokenValid
               ? "Please provide your information to complete registration"
-              : existingRegistration 
-                ? "Your registration has been completed. You can view and edit your information below."
-                : "Please provide your information to complete registration"
-            }
+              : existingRegistration
+              ? "Your registration has been completed. You can view and edit your information below."
+              : "Please provide your information to complete registration"}
           </Text>
           {!tokenValid && existingRegistration && (
             <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
               <Text className="text-green-700 text-sm">
-                ✅ Registration completed on {new Date(existingRegistration.createdAt).toLocaleDateString()}
+                ✅ Registration completed on{" "}
+                {new Date(existingRegistration.createdAt).toLocaleDateString()}
               </Text>
             </div>
           )}
           {!tokenValid && !existingRegistration && (
             <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
               <Text className="text-yellow-700 text-sm">
-                ⚠️ This registration link has expired, but you can still provide your information
+                ⚠️ This registration link has expired, but you can still provide
+                your information
               </Text>
             </div>
           )}
@@ -304,6 +356,7 @@ export const Registration: React.FC = () => {
 
         <Card className="shadow-lg border border-gray-200 rounded-lg">
           <Form
+            form={form}
             name="registration"
             onFinish={onFinish}
             layout="vertical"
@@ -311,19 +364,28 @@ export const Registration: React.FC = () => {
             scrollToFirstError
             className="p-4"
             initialValues={
-              existingRegistration ? {
-                name: existingRegistration.name,
-                age: existingRegistration.age,
-                sex: existingRegistration.sex,
-                dob: existingRegistration.dob ? dayjs(existingRegistration.dob) : undefined,
-                address: existingRegistration.address,
-                contactNumber: existingRegistration.contactNumber,
-                email: existingRegistration.email,
-                allergies: existingRegistration.allergies,
-                currentMedicalIllness: existingRegistration.currentMedicalIllness,
-                symptoms: existingRegistration.symptoms,
-              } : undefined
+              existingRegistration
+                ? {
+                    name: existingRegistration.name,
+                    sex: existingRegistration.sex,
+                    dob: existingRegistration.dob
+                      ? dayjs(existingRegistration.dob)
+                      : undefined,
+                    address: existingRegistration.address,
+                    contactNumber: existingRegistration.contactNumber,
+                    email: existingRegistration.email,
+                    allergies: existingRegistration.allergies,
+                    currentMedicalIllness:
+                      existingRegistration.currentMedicalIllness,
+                    symptoms: existingRegistration.symptoms,
+                  }
+                : undefined
             }
+            onValuesChange={(changedValues) => {
+              if (changedValues.dob) {
+                calculateAge(changedValues.dob);
+              }
+            }}
           >
             {/* Patient Information Section */}
             <div className="mb-4">
@@ -356,7 +418,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <Input
-                    size="large"
+                      size="large"
                       prefix={<UserOutlined className="text-gray-400" />}
                       placeholder="Enter your full name"
                     />
@@ -379,49 +441,14 @@ export const Registration: React.FC = () => {
                       placeholder="Select date of birth"
                       format="YYYY-MM-DD"
                       disabledDate={(current) =>
-                        current && current > dayjs().endOf("day")
+                        current && current >= dayjs().startOf("day")
                       }
+                      onChange={(date) => {
+                        calculateAge(date);
+                      }}
                     />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
-                  <Form.Item
-                    name="age"
-                    label="Age"
-                    rules={[
-                      { required: true, message: "Please input your age!" },
-                      {
-                        type: "number",
-                        min: 1,
-                        max: 120,
-                        message: "Age must be between 1 and 120!",
-                      },
-                      {
-                        validator: (_, value) => {
-                          if (value && (value < 1 || value > 120)) {
-                            return Promise.reject(
-                              new Error("Age must be between 1 and 120!")
-                            );
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]}
-                  >
-                    <InputNumber
-                                        size="large"
-
-                      className="!w-full"
-                      placeholder="Enter your age"
-                      min={1}
-                      max={120}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={12}>
-                
                 <Col span={8}>
                   <Form.Item
                     name="sex"
@@ -437,6 +464,18 @@ export const Registration: React.FC = () => {
                     </Select>
                   </Form.Item>
                 </Col>
+                <Col span={8}>
+                  <Form.Item
+                    label="Age (Calculated)"
+                  >
+                    <Input
+                      size="large"
+                      placeholder="Age will be calculated automatically"
+                      disabled
+                      value={calculatedAge}
+                    />
+                  </Form.Item>
+                </Col>
               </Row>
             </div>
 
@@ -450,8 +489,7 @@ export const Registration: React.FC = () => {
               </div>
 
               <Row gutter={12}>
-                
-                   <Col span={8}>
+                <Col span={8}>
                   <Form.Item
                     name="contactNumber"
                     label="Contact Number"
@@ -510,7 +548,7 @@ export const Registration: React.FC = () => {
                     />
                   </Form.Item>
                 </Col>
-                 <Col span={8}>
+                <Col span={8}>
                   <Form.Item
                     name="email"
                     label="Email Address"
@@ -530,7 +568,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <Input
-                    size="large"
+                      size="large"
                       prefix={<MailOutlined className="text-gray-400" />}
                       placeholder="Enter your email address"
                     />
@@ -561,7 +599,6 @@ export const Registration: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
             </div>
 
             {/* Medical Information Section */}
@@ -689,10 +726,10 @@ export const Registration: React.FC = () => {
                 {loading
                   ? "Processing..."
                   : tokenValid
-                    ? "Complete Registration"
-                    : existingRegistration
-                      ? "Update Information"
-                      : "Submit Information"}
+                  ? "Complete Registration"
+                  : existingRegistration
+                  ? "Update Information"
+                  : "Submit Information"}
               </Button>
             </Form.Item>
           </Form>
