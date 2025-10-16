@@ -4,6 +4,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LoginRequest } from '../types';
+import useApp from 'antd/es/app/useApp';
 
 const { Title, Text } = Typography;
 
@@ -11,6 +12,7 @@ export const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const { notification } = useApp();
     const location = useLocation();
 
     const from = location.state?.from?.pathname || '/dashboard';
@@ -19,10 +21,10 @@ export const Login: React.FC = () => {
         try {
             setLoading(true);
             await login(values);
-            message.success('Login successful!');
+            notification.success({ message: 'Login successful!' });
             navigate(from, { replace: true });
         } catch (error: any) {
-            message.error(error.response?.data?.msg || 'Login failed');
+            notification.error({ message: error.response?.data?.msg || 'Login failed' });
         } finally {
             setLoading(false);
         }
