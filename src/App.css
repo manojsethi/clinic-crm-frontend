@@ -1,6 +1,7 @@
 /* Basic animations and minimal styling */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

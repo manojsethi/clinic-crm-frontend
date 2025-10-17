@@ -98,26 +98,40 @@ export const authService = {
 export const qrService = {
   getQR: async (deviceId?: string, doctorId?: string): Promise<QRData> => {
     const params = new URLSearchParams();
-    if (deviceId) params.append('deviceId', deviceId);
-    if (doctorId) params.append('doctorId', doctorId);
-    
-    const response: AxiosResponse<QRData> = await api.get(`/qr/generate?${params.toString()}`);
+    if (deviceId) params.append("deviceId", deviceId);
+    if (doctorId) params.append("doctorId", doctorId);
+
+    const response: AxiosResponse<QRData> = await api.get(
+      `/qr/generate?${params.toString()}`
+    );
     return response.data;
   },
   getCurrentQR: async (): Promise<QRData> => {
     const response: AxiosResponse<QRData> = await api.get("/qr/current");
     return response.data;
   },
-  validateToken: async (tokenId: string): Promise<{ msg: string; valid: boolean; token?: any }> => {
-    const response: AxiosResponse<{ msg: string; valid: boolean; token?: any }> = await api.get(`/qr/validate/${tokenId}`);
+  validateToken: async (
+    tokenId: string
+  ): Promise<{ msg: string; valid: boolean; token?: any }> => {
+    const response: AxiosResponse<{
+      msg: string;
+      valid: boolean;
+      token?: any;
+    }> = await api.get(`/qr/validate/${tokenId}`);
     return response.data;
   },
   consumeQr: async (qr: string, roomId?: string): Promise<QRData> => {
     const params = new URLSearchParams();
-    if (roomId) params.append('roomId', roomId);
-    
-    console.log('🔍 [API] Consuming QR with params:', { qr, roomId, params: params.toString() });
-    const response: AxiosResponse<QRData> = await api.post(`/qr/consume/${qr}?${params.toString()}`);
+    if (roomId) params.append("roomId", roomId);
+
+    console.log("🔍 [API] Consuming QR with params:", {
+      qr,
+      roomId,
+      params: params.toString(),
+    });
+    const response: AxiosResponse<QRData> = await api.post(
+      `/qr/consume/${qr}?${params.toString()}`
+    );
     return response.data;
   },
 };
@@ -127,39 +141,37 @@ export const registrationService = {
     tokenId: string,
     data: RegistrationData
   ): Promise<{ msg: string; registration: Registration }> => {
-    const response: AxiosResponse<{ msg: string; registration: Registration }> = await api.post(
-      `/registration/${tokenId}`,
-      data
-    );
+    const response: AxiosResponse<{ msg: string; registration: Registration }> =
+      await api.post(`/registration/${tokenId}`, data);
     return response.data;
   },
   getRegistrationByToken: async (tokenId: string): Promise<Registration> => {
-    const response: AxiosResponse<Registration> = await api.get(`/registration/token/${tokenId}`);
+    const response: AxiosResponse<Registration> = await api.get(
+      `/registration/token/${tokenId}`
+    );
     return response.data;
   },
   updateRegistrationByToken: async (
     tokenId: string,
     data: RegistrationData
   ): Promise<{ msg: string; registration: Registration }> => {
-    const response: AxiosResponse<{ msg: string; registration: Registration }> = await api.put(
-      `/registration/token/${tokenId}`,
-      data
-    );
+    const response: AxiosResponse<{ msg: string; registration: Registration }> =
+      await api.put(`/registration/token/${tokenId}`, data);
     return response.data;
   },
 
-  getRegistrations: async (params?: { 
-    page?: number; 
-    limit?: number; 
-    search?: string; 
-    startDate?: string; 
-    endDate?: string; 
-    status?: string; 
+  getRegistrations: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: string;
   }): Promise<{ registrations: Registration[]; pagination: Pagination }> => {
-    const response: AxiosResponse<{ registrations: Registration[]; pagination: Pagination }> = await api.get(
-      "/registration",
-      { params }
-    );
+    const response: AxiosResponse<{
+      registrations: Registration[];
+      pagination: Pagination;
+    }> = await api.get("/registration", { params });
     return response.data;
   },
 
@@ -170,18 +182,21 @@ export const registrationService = {
     return response.data;
   },
 
-  getRegistrationsByDoctor: async (doctorId: string, params?: { 
-    page?: number; 
-    limit?: number; 
-    search?: string; 
-    startDate?: string; 
-    endDate?: string; 
-    status?: string; 
-  }): Promise<{ registrations: Registration[]; pagination: Pagination }> => {
-    const response: AxiosResponse<{ registrations: Registration[]; pagination: Pagination }> = await api.get(
-      `/registration/doctor/${doctorId}`,
-      { params }
-    );
+  getRegistrationsByDoctor: async (
+    doctorId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+    }
+  ): Promise<{ registrations: Registration[]; pagination: Pagination }> => {
+    const response: AxiosResponse<{
+      registrations: Registration[];
+      pagination: Pagination;
+    }> = await api.get(`/registration/doctor/${doctorId}`, { params });
     return response.data;
   },
 };
@@ -207,7 +222,11 @@ export const adminService = {
   },
 
   // Devices CRUD
-  getDevices: async (params?: { page?: number; limit?: number; onlyAvailable?: boolean }): Promise<any> => {
+  getDevices: async (params?: {
+    page?: number;
+    limit?: number;
+    onlyAvailable?: boolean;
+  }): Promise<any> => {
     const response: AxiosResponse<DeviceResult> = await api.get(
       `/admin/devices`,
       { params }

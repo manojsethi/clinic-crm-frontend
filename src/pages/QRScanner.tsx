@@ -21,7 +21,7 @@ export const QRScanner: React.FC = () => {
   const fetchDevicesAndDoctors = async () => {
     try {
       const [devicesResponse, doctorsResponse] = await Promise.all([
-        adminService.getDevices({ }),
+        adminService.getDevices({}),
         adminService.getUsers({ role: "doctor" }),
       ]);
 
@@ -52,12 +52,12 @@ export const QRScanner: React.FC = () => {
 
     const handleAvailable = handleInUse;
 
-    socket.on('DEVICE_IN_USE', handleInUse);
-    socket.on('DEVICE_AVAILABLE', handleAvailable);
+    socket.on("DEVICE_IN_USE", handleInUse);
+    socket.on("DEVICE_AVAILABLE", handleAvailable);
 
     return () => {
-      socket.off('DEVICE_IN_USE', handleInUse);
-      socket.off('DEVICE_AVAILABLE', handleAvailable);
+      socket.off("DEVICE_IN_USE", handleInUse);
+      socket.off("DEVICE_AVAILABLE", handleAvailable);
     };
   }, [socket, isConnected]);
 
@@ -67,43 +67,46 @@ export const QRScanner: React.FC = () => {
   }) => {
     try {
       setMappingLoading(true);
-  const selectedDevice = devices.find(
-           (d) => d.deviceId === values.deviceId
-         );
+      const selectedDevice = devices.find(
+        (d) => d.deviceId === values.deviceId
+      );
       // Create device-doctor mapping
       const mappingResult = await deviceDoctorMappingService.createMapping({
-        deviceId: selectedDevice?._id.toString()??"",
+        deviceId: selectedDevice?._id.toString() ?? "",
         doctorId: values.doctorId,
         notes: `Registration session started at ${new Date().toLocaleString()}`,
       });
 
-       if (mappingResult.success) {
-         message.success("Device-Doctor mapping created successfully!");
+      if (mappingResult.success) {
+        message.success("Device-Doctor mapping created successfully!");
 
-         // Set registration context with device and doctor info
-       
-         const selectedDoctor = doctors.find((d) => d._id === values.doctorId);
+        // Set registration context with device and doctor info
 
-         setRegistrationContext({
-           deviceId: selectedDevice?._id.toString()??"",
-           doctorId: values.doctorId,
-           deviceName: selectedDevice?.deviceName || "",
-           doctorName: selectedDoctor?.username || "",
-         });
+        const selectedDoctor = doctors.find((d) => d._id === values.doctorId);
 
-         // Store the QR token for use in registration
-         if (mappingResult.data?.qrToken) {
-           console.log("🎯 QR Token generated and stored:", mappingResult.data.qrToken);
-           // You can store this token in localStorage or context for later use
-           localStorage.setItem('currentQrToken', mappingResult.data.qrToken);
-           console.log("💾 Token stored in localStorage");
-         } else {
-           console.log("❌ No QR token received from mapping result");
-         }
+        setRegistrationContext({
+          deviceId: selectedDevice?._id.toString() ?? "",
+          doctorId: values.doctorId,
+          deviceName: selectedDevice?.deviceName || "",
+          doctorName: selectedDoctor?.username || "",
+        });
 
-         // Navigate to registration setup page
-         navigate("/registration-setup");
-       } else {
+        // Store the QR token for use in registration
+        if (mappingResult.data?.qrToken) {
+          console.log(
+            "🎯 QR Token generated and stored:",
+            mappingResult.data.qrToken
+          );
+          // You can store this token in localStorage or context for later use
+          localStorage.setItem("currentQrToken", mappingResult.data.qrToken);
+          console.log("💾 Token stored in localStorage");
+        } else {
+          console.log("❌ No QR token received from mapping result");
+        }
+
+        // Navigate to registration setup page
+        navigate("/registration-setup");
+      } else {
         message.error(mappingResult.message || "Failed to create mapping");
       }
     } catch (error: any) {

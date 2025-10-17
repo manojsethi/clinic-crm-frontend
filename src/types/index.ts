@@ -59,23 +59,16 @@ export interface Pagination {
 export interface Registration {
   _id: string;
   tokenId: any;
-  // Patient Information
   name: string;
   age: number;
   sex: 'Male' | 'Female' | 'Other';
   dob?: string;
-
-  // Contact Information
   address?: string;
   contactNumber?: string;
   email?: string;
-
-  // Medical Information
   allergies?: string;
   currentMedicalIllness?: string;
   symptoms?: string;
-
-  // Legacy fields for backward compatibility
   deviceId?: any;
   doctorId?: any;
   createdAt: string;
@@ -113,7 +106,6 @@ export interface AuthContextType {
   isLoading: boolean;
 }
 
-// Devices
 export interface Device {
   _id: string;
   deviceId: string;
@@ -181,4 +173,49 @@ export interface MappingResult {
     mappings?: DeviceDoctorMapping[];
     qrToken?: string;
   };
+}
+
+// File Manager interfaces
+export interface FileItem {
+  _id: string;
+  name: string;
+  type: 'file' | 'image' | 'url';
+  size?: number;
+  url?: string;
+  filePath?: string;
+  mimeType?: string;
+  description?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  qrCode?: string;
+  isActive: boolean;
+}
+
+export interface UploadRequest {
+  name: string;
+  type: 'file' | 'image' | 'url';
+  description?: string;
+  tags?: string[];
+  url?: string;
+  file?: File;
+}
+
+export interface FileManagerResult {
+  success: boolean;
+  message?: string;
+  data?: {
+    file?: FileItem;
+    files?: FileItem[];
+    pagination?: Pagination;
+  };
+}
+
+export interface ScannerData {
+  fileId: string;
+  fileName: string;
+  fileType: string;
+  qrCode: string;
+  createdAt: string;
 }

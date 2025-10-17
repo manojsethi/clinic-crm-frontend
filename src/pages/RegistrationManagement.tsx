@@ -176,7 +176,6 @@ export const RegistrationManagement: React.FC = () => {
             onChange={(e) => handleSearch(e.target.value)}
           />
           <RangePicker onChange={handleDateChange} />
-         
         </div>
 
         <Table

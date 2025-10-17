@@ -19,6 +19,7 @@ import { RegistrationDetail } from "./pages/RegistrationDetail";
 import { UserManagement } from "./pages/UserManagement";
 import "./App.css";
 import Devices from "./pages/Devices";
+import FileManager from "./pages/FileManager";
 
 function App() {
   return (
@@ -67,6 +68,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <RegistrationManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/file-manager"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <FileManager />
                   </Layout>
                 </ProtectedRoute>
               }

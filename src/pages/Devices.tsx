@@ -26,7 +26,6 @@ const { Title, Text } = Typography;
     try {
       setLoading(true);
       const data = await adminService.getDevices();
-      console.log(data,"heyoo")
       setDevices(data?.devices || []);
     } catch (error: any) {
       message.error("Failed to fetch devices");

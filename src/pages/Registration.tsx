@@ -54,15 +54,15 @@ export const Registration: React.FC = () => {
       setCalculatedAge("");
       return;
     }
-    
+
     const today = dayjs();
-    const age = today.diff(dob, 'year');
-    
+    const age = today.diff(dob, "year");
+
     if (age === 0) {
       // If less than 1 year, show months
-      const months = today.diff(dob, 'month');
+      const months = today.diff(dob, "month");
       if (months === 0) {
-        const days = today.diff(dob, 'day');
+        const days = today.diff(dob, "day");
         setCalculatedAge(`${days} days old`);
       } else {
         setCalculatedAge(`${months} months old`);
@@ -436,7 +436,7 @@ export const Registration: React.FC = () => {
                     ]}
                   >
                     <DatePicker
-                    size="large"
+                      size="large"
                       className="w-full"
                       placeholder="Select date of birth"
                       format="YYYY-MM-DD"
@@ -465,9 +465,7 @@ export const Registration: React.FC = () => {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item
-                    label="Age (Calculated)"
-                  >
+                  <Form.Item label="Age (Calculated)">
                     <Input
                       size="large"
                       placeholder="Age will be calculated automatically"
