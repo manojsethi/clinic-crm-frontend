@@ -16,17 +16,18 @@ import {
   UserOutlined,
   CalendarOutlined,
   MedicineBoxOutlined,
-  DesktopOutlined,
   ClockCircleOutlined,
   ArrowLeftOutlined,
   ReloadOutlined,
-  IdcardOutlined,
   ContactsOutlined,
+  EditOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { registrationService } from "../services/api";
 import { PopulatedRegistration } from "../types";
 import dayjs from "dayjs";
 import { useAuth } from "../context/AuthContext";
+import MDEditor from "@uiw/react-md-editor";
 
 const { Title, Text } = Typography;
 
@@ -37,7 +38,41 @@ export const RegistrationDetail: React.FC = () => {
     useState<PopulatedRegistration | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingAdvice, setIsEditingAdvice] = useState(false);
+  const [adviceContent, setAdviceContent] = useState("");
+  const [savingAdvice, setSavingAdvice] = useState(false);
   const { user } = useAuth();
+
+  // Function to format age from days to years, months, and days
+  const formatAge = (ageInDays: number): string => {
+    const years = Math.floor(ageInDays / 365);
+    const remainingDays = ageInDays % 365;
+    const months = Math.floor(remainingDays / 30);
+    const days = remainingDays % 30;
+
+    if (years === 0) {
+      if (months === 0) {
+        if (days === 0) {
+          return "Less than 1 day old";
+        } else if (days === 1) {
+          return "1 day old";
+        } else {
+          return `${days} days old`;
+        }
+      } else if (months === 1) {
+        return days === 0 ? "1 month old" : `1 month ${days} days old`;
+      } else {
+        return days === 0 ? `${months} months old` : `${months} months ${days} days old`;
+      }
+    } else if (months === 0) {
+      return days === 0 ? `${years} years old` : `${years} years ${days} days old`;
+    } else {
+      const parts = [`${years} years`];
+      if (months > 0) parts.push(`${months} months`);
+      if (days > 0) parts.push(`${days} days`);
+      return `${parts.join(' ')} old`;
+    }
+  };
 
   const fetchRegistrationDetails = async () => {
     if (!id) {
@@ -72,6 +107,38 @@ export const RegistrationDetail: React.FC = () => {
 
   const handleRefresh = () => {
     fetchRegistrationDetails();
+  };
+
+  const handleEditAdvice = () => {
+    setAdviceContent(registration?.doctorAdvice || "");
+    setIsEditingAdvice(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingAdvice(false);
+    setAdviceContent("");
+  };
+
+  const handleSaveAdvice = async () => {
+    if (!id) return;
+
+    try {
+      setSavingAdvice(true);
+      const response = await registrationService.updateRegistrationAdvice(id, adviceContent);
+      setRegistration(response.registration as PopulatedRegistration);
+      setIsEditingAdvice(false);
+      message.success("Doctor advice saved successfully");
+    } catch (error: any) {
+      message.error(error.response?.data?.msg || "Failed to save advice");
+    } finally {
+      setSavingAdvice(false);
+    }
+  };
+
+  const canEditAdvice = () => {
+    if (!user || !registration) return false;
+    // Only doctors can edit advice, and only the assigned doctor for this registration
+    return user.role === 'doctor' && registration.doctorId?._id === user.id;
   };
 
   if (loading) {
@@ -119,7 +186,7 @@ export const RegistrationDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-[94vh] bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -185,7 +252,7 @@ export const RegistrationDetail: React.FC = () => {
                     </Space>
                   }
                 >
-                  <Text>{dayjs(registration.dob).format("MMMM DD, YYYY")}</Text>
+                  <Text>{dayjs(registration.dob).format("YYYY MMMM DD")}</Text>
                 </Descriptions.Item>
 
                 <Descriptions.Item
@@ -197,7 +264,11 @@ export const RegistrationDetail: React.FC = () => {
                   }
                 >
                   <Tag color="blue" className="text-base px-3 py-1">
-                    {registration.age} years old
+                    {formatAge(
+                      registration.dob
+                        ? dayjs().diff(dayjs(registration.dob), "day")
+                        : registration.age
+                    )}
                   </Tag>
                 </Descriptions.Item>
 
@@ -280,6 +351,39 @@ export const RegistrationDetail: React.FC = () => {
           </Col>
         </Row>
 
+        {/* Doctor Information Row */}
+        {registration.doctorId && (
+          <Row gutter={[24, 24]} className="mt-6">
+            <Col xs={24}>
+              <Card
+                title={
+                  <Space>
+                    <UserOutlined className="text-purple-500" />
+                    <span>Assigned Doctor</span>
+                  </Space>
+                }
+                className="shadow-xl border-0"
+              >
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12}>
+                    <div>
+                      <Text type="secondary" className="text-sm">
+                        Doctor Name
+                      </Text>
+                      <div>
+                        <Text strong className="text-lg">
+                          Dr. {registration.doctorId.username}
+                        </Text>
+                      </div>
+                    </div>
+                  </Col>
+                
+                </Row>
+              </Card>
+            </Col>
+          </Row>
+        )}
+
         {/* Medical Information Row */}
         <Row gutter={[24, 24]} className="mt-6">
           {/* Medical Information */}
@@ -333,161 +437,79 @@ export const RegistrationDetail: React.FC = () => {
             </Card>
           </Col>
 
-          {/* Device & Doctor Information */}
-          <Col xs={24} lg={8}>
-            <Space direction="vertical" size="large" className="w-full">
-              {/* Device Information */}
-              <Card
-                title={
-                  <Space>
-                    <DesktopOutlined className="text-green-500" />
-                    <span>Device Information</span>
-                  </Space>
-                }
-                className="shadow-xl border-0"
-              >
-                {registration.deviceId ? (
-                  <Space direction="vertical" size="middle" className="w-full">
-                    <div>
-                      <Text type="secondary" className="text-sm">
-                        Device Name
-                      </Text>
-                      <div>
-                        <Text strong className="text-base">
-                          {registration.deviceId.deviceName}
-                        </Text>
-                      </div>
-                    </div>
-                    {registration.deviceId.roomName && (
-                      <div>
-                        <Text type="secondary" className="text-sm">
-                          Room
-                        </Text>
-                        <div>
-                          <Tag color="green">
-                            {registration.deviceId.roomName}
-                          </Tag>
-                        </div>
-                      </div>
-                    )}
-                  </Space>
-                ) : (
-                  <Text type="secondary" italic>
-                    No device information available
-                  </Text>
-                )}
-              </Card>
-
-              {user?.role === "admin" && (
-                <Card
-                  title={
-                    <Space>
-                      <MedicineBoxOutlined className="text-purple-500" />
-                      <span>Assigned Doctor</span>
-                    </Space>
-                  }
-                  className="shadow-xl border-0"
-                >
-                  {registration.doctorId ? (
-                    <Space
-                      direction="vertical"
-                      size="middle"
-                      className="w-full"
-                    >
-                      <div>
-                        <Text type="secondary" className="text-sm">
-                          Doctor Name
-                        </Text>
-                        <div>
-                          <Text strong className="text-base">
-                            Dr. {registration.doctorId.username}
-                          </Text>
-                        </div>
-                      </div>
-                    </Space>
-                  ) : (
-                    <Text type="secondary" italic>
-                      No doctor assigned
-                    </Text>
-                  )}
-                </Card>
-              )}
-            </Space>
-          </Col>
+    
         </Row>
 
-        {/* Token Information */}
-        {registration.tokenId && (
-          <Card
-            title={
-              <Space>
-                <IdcardOutlined className="text-orange-500" />
-                <span>Token Information</span>
-              </Space>
-            }
-            className="shadow-xl border-0"
-          >
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12}>
-                <div>
-                  <Text type="secondary" className="text-sm">
-                    Token ID
+        {/* Doctor Advice Section */}
+        <Card
+          title={
+            <Space>
+              <MedicineBoxOutlined className="text-purple-500" />
+              <span>Doctor's Advice</span>
+            </Space>
+          }
+          className="shadow-xl border-0"
+          extra={
+            canEditAdvice() && !isEditingAdvice && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={handleEditAdvice}
+                type="primary"
+                ghost
+              >
+                Edit Advice
+              </Button>
+            )
+          }
+        >
+          {isEditingAdvice ? (
+            <div>
+              <MDEditor
+                value={adviceContent}
+                onChange={(val) => setAdviceContent(val || "")}
+                height={300}
+                data-color-mode="light"
+              />
+              <div className="mt-4 flex justify-end space-x-2">
+                <Button onClick={handleCancelEdit}>
+                  Cancel
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={handleSaveAdvice}
+                  loading={savingAdvice}
+                >
+                  Save Advice
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {registration?.doctorAdvice ? (
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ 
+                    __html: registration.doctorAdvice.replace(/\n/g, '<br>') 
+                  }}
+                />
+              ) : (
+                <div className="text-center pt-8 text-gray-500">
+                  <MedicineBoxOutlined className="text-4xl mb-2" />
+                  <Text type="secondary">
+                    {canEditAdvice() 
+                      ? "No advice provided yet. Click 'Edit Advice' to add your recommendations."
+                      : "No advice provided for this patient. Only the assigned doctor can provide advice."
+                    }
                   </Text>
-                  <div>
-                    <Text code className="text-sm">
-                      {registration.tokenId.token}
-                    </Text>
-                  </div>
                 </div>
-              </Col>
-              <Col xs={24} sm={12}>
-                <div>
-                  <Text type="secondary" className="text-sm">
-                    Token Created
-                  </Text>
-                  <div>
-                    <Text>
-                      {dayjs(registration.tokenId.createdAt).format(
-                        "MMM DD, YYYY h:mm A"
-                      )}
-                    </Text>
-                  </div>
-                </div>
-              </Col>
-              {registration.tokenId.consumedAt && (
-                <Col xs={24} sm={12}>
-                  <div>
-                    <Text type="secondary" className="text-sm">
-                      Token Consumed
-                    </Text>
-                    <div>
-                      <Text>
-                        {dayjs(registration.tokenId.consumedAt).format(
-                          "MMM DD, YYYY h:mm A"
-                        )}
-                      </Text>
-                    </div>
-                  </div>
-                </Col>
               )}
-            </Row>
-          </Card>
-        )}
-        <br />
-
-        {/* Status Information */}
-        <Card className="shadow-xl border-0">
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={12}>
-              <Space>
-                <Text strong>Registration Status:</Text>
-                <Tag color="green" className="text-base px-3 py-1">
-                  Completed
-                </Tag>
-              </Space>
-            </Col>
-          </Row>
+            </div>
+          )}
         </Card>
+
+    
+   
       </div>
     </div>
   );

@@ -27,7 +27,9 @@ const UpdateDeviceModal = ({
       handleOnCloseModal();
       refetch();
     } catch (error: any) {
-      notification.error({ message: "Failed to update device" });
+      notification.error({
+        message: error?.response?.data?.msg ?? "Failed to update device",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -55,5 +57,3 @@ const UpdateDeviceModal = ({
 };
 
 export default UpdateDeviceModal;
-
-

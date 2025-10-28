@@ -35,7 +35,7 @@ export const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await adminService.getUsers();
+      const data: any = await adminService.getUsers();
       setUsers(data.users);
     } catch (error: any) {
       message.error("Failed to fetch users");
@@ -48,13 +48,19 @@ export const UserManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const handleDeleteUser = async (id: string) => {
+  const handleDeleteUser = async (id: string, userRole?: string) => {
     try {
-      await adminService.deleteUser(id);
-      notification.success({ message: "User deleted successfully" });
+      const response = await adminService.deleteUser(id);
+      notification.success({ 
+        message: response.msg || (userRole === 'doctor' 
+          ? "Doctor and all related data deleted successfully" 
+          : "User deleted successfully")
+      });
       fetchUsers();
     } catch (error: any) {
-      notification.error({ message: "Failed to delete user" });
+      notification.error({ 
+        message: error.response?.data?.msg || "Failed to delete user" 
+      });
     }
   };
 
@@ -99,10 +105,20 @@ export const UserManagement: React.FC = () => {
             />
           </Tooltip>
           <Popconfirm
-            title="Are you sure you want to delete this user?"
-            onConfirm={() => handleDeleteUser(record._id)}
-            okText="Yes"
-            cancelText="No"
+            title={
+              record.role === 'doctor' 
+                ? "Delete Doctor and All Related Data"
+                : "Are you sure you want to delete this user?"
+            }
+            description={
+              record.role === 'doctor' 
+                ? <p>This will permanently delete the doctor and ALL their related data!</p>
+                : "This action cannot be undone!"
+            }
+            onConfirm={() => handleDeleteUser(record._id, record.role)}
+            okText="Yes, Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
           >
             <Tooltip title="Delete User">
               <Button icon={<DeleteOutlined />} size="small" danger />
@@ -176,6 +192,7 @@ export const UserManagement: React.FC = () => {
           handleOnCloseModal={() => {
             setEditingUser(null);
           }}
+          refetch={fetchUsers}
         />
       )}
     </div>

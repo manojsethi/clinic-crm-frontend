@@ -26,6 +26,11 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    // Skip authentication for public endpoints
+    if (config.url?.includes('/files/qr/')) {
+      return config;
+    }
+    
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -136,6 +141,13 @@ export const qrService = {
     );
     return response.data;
   },
+  updateCurrentTokenRoomId: async (roomId: string): Promise<{ msg: string; data?: any }> => {
+    const response: AxiosResponse<{ msg: string; data?: any }> = await api.put(
+      "/qr/current/room",
+      { roomId }
+    );
+    return response.data;
+  },
 };
 
 export const registrationService = {
@@ -201,6 +213,15 @@ export const registrationService = {
     }> = await api.get(`/registration/doctor/${doctorId}`, { params });
     return response.data;
   },
+
+  updateRegistrationAdvice: async (
+    id: string,
+    advice: string
+  ): Promise<{ msg: string; registration: Registration }> => {
+    const response: AxiosResponse<{ msg: string; registration: Registration }> =
+      await api.put(`/registration/${id}/advice`, { advice });
+    return response.data;
+  },
 };
 
 export const adminService = {
@@ -219,8 +240,17 @@ export const adminService = {
     return response.data;
   },
 
-  deleteUser: async (id: string): Promise<void> => {
-    await api.delete(`/admin/users/${id}`);
+  updateUser: async (id: string, userData: Partial<UserManagementRequest>): Promise<any> => {
+    const response: AxiosResponse<any> = await api.put(
+      `/admin/users/${id}`,
+      userData
+    );
+    return response.data;
+  },
+
+  deleteUser: async (id: string): Promise<{ msg: string }> => {
+    const response: AxiosResponse<{ msg: string }> = await api.delete(`/admin/users/${id}`);
+    return response.data;
   },
 
   // Devices CRUD

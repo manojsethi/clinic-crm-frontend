@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Spin, Result, Button, Typography, Card, Tag, message, Image } from 'antd';
 import { LinkOutlined, FileOutlined, PictureOutlined, HomeOutlined, DownloadOutlined } from '@ant-design/icons';
@@ -15,6 +15,7 @@ export const QRHandler: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const imageUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (fileId) {
@@ -25,14 +26,13 @@ export const QRHandler: React.FC = () => {
     }
 
     // Cleanup image URL on unmount
-    return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [fileId, imageUrl]);
+    
+  }, [fileId]);
 
   const handleFileAccess = async (id: string) => {
+    // Prevent multiple calls if already loading
+    // if (loading) return;
+    
     try {
       setLoading(true);
       const response = await fileManagerService.accessFileByQR(id);
@@ -44,8 +44,9 @@ export const QRHandler: React.FC = () => {
         if (response.file.type === 'image') {
           try {
             const imageBlob = await fileManagerService.downloadFile(id);
-            const imageUrl = URL.createObjectURL(imageBlob);
-            setImageUrl(imageUrl);
+            const newImageUrl = URL.createObjectURL(imageBlob);
+            setImageUrl(newImageUrl);
+            imageUrlRef.current = newImageUrl;
           } catch (imageError) {
             console.error('Error loading image:', imageError);
             message.warning('Could not load image preview');

@@ -37,6 +37,37 @@ export const RegistrationManagement: React.FC = () => {
 
   const debounceRef = useRef<any | null>(null);
 
+  // Function to format age from days to years, months, and days
+  const formatAge = (ageInDays: number): string => {
+    const years = Math.floor(ageInDays / 365);
+    const remainingDays = ageInDays % 365;
+    const months = Math.floor(remainingDays / 30);
+    const days = remainingDays % 30;
+
+    if (years === 0) {
+      if (months === 0) {
+        if (days === 0) {
+          return "< 1 day";
+        } else if (days === 1) {
+          return "1 day";
+        } else {
+          return `${days} days`;
+        }
+      } else if (months === 1) {
+        return days === 0 ? "1 month" : `1m ${days}d`;
+      } else {
+        return days === 0 ? `${months} months` : `${months}m ${days}d`;
+      }
+    } else if (months === 0) {
+      return days === 0 ? `${years} years` : `${years}y ${days}d`;
+    } else {
+      const parts = [`${years}y`];
+      if (months > 0) parts.push(`${months}m`);
+      if (days > 0) parts.push(`${days}d`);
+      return parts.join(' ');
+    }
+  };
+
   const fetchRegistrations = async (
     search = "",
     dates?: [dayjs.Dayjs, dayjs.Dayjs]
@@ -105,7 +136,24 @@ export const RegistrationManagement: React.FC = () => {
       title: "Age",
       dataIndex: "age",
       key: "age",
-      render: (age: number) => <Tag color="blue">{age} years</Tag>,
+      render: (_: number, record: Registration) => (
+        <Tag color="blue">
+          {formatAge(
+            record.dob ? dayjs().diff(dayjs(record.dob), "day") : record.age
+          )}
+        </Tag>
+      ),
+    },
+    {
+      title: "Doctor",
+      dataIndex: "doctorId",
+      key: "doctorId",
+      render: (doctor: any) => (
+        <Space>
+          <UserOutlined className="text-green-500" />
+          <Text>{doctor?.username || "Not assigned"}</Text>
+        </Space>
+      ),
     },
     {
       title: "Symptoms",

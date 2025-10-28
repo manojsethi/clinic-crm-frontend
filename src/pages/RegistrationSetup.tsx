@@ -155,6 +155,16 @@ export const RegistrationSetup: React.FC = () => {
         currentRoom,
         hasToken: !!(qrData?.token || socketQr),
       });
+      
+      // Update the current token in database with roomId
+      qrService.updateCurrentTokenRoomId(currentRoom)
+        .then((response) => {
+          console.log("✅ Current token updated with roomId:", response);
+        })
+        .catch((error) => {
+          console.error("❌ Failed to update current token with roomId:", error);
+        });
+      
       // The QR composition useEffect will handle this automatically
     }
   }, [currentRoom, qrData?.token, socketQr]);
@@ -168,12 +178,12 @@ export const RegistrationSetup: React.FC = () => {
     });
 
     if (currentToken && currentRoom) {
-      // Generate URL with both token and roomId parameters
+      // Generate URL with token (roomId will be extracted from token in database)
       const url = `${
         import.meta.env.VITE_CLINIC_CLIENT_URL
       }/register?token=${encodeURIComponent(
         currentToken
-      )}&roomId=${encodeURIComponent(currentRoom)}`;
+      )}`;
 
       console.log("✅ Setting composed QR URL with roomId:", url);
       setComposedQR(url);
@@ -334,7 +344,7 @@ export const RegistrationSetup: React.FC = () => {
                 qrCode={composedQR}
                 isLoading={loading}
                 title="Registration QR Code"
-                description="Scan this QR code with your phone camera"
+                description={`Scan this QR code with your phone camera to register with Dr. ${doctorName || 'the doctor'}`}
               />
               {!loading && !composedQR && (
                 <div className="mt-3 text-center">

@@ -35,7 +35,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { UploadProps } from "antd";
 import type { FileItem } from "../types";
 import { fileManagerService } from "../services/api";
-import { QRScanner } from "../components/QRScanner";
+import useApp from "antd/es/app/useApp";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -57,7 +57,7 @@ const FileManager: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [uploadedFile, setUploadedFile] = useState<FileItem | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [scannerVisible, setScannerVisible] = useState(false);
+    const { notification } = useApp()
 
     // Load files from API
     const loadFiles = async () => {
@@ -68,9 +68,10 @@ const FileManager: React.FC = () => {
                 search: searchText || undefined,
             });
             setFiles(response.files);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to load files:", error);
-            message.error("Failed to load files");
+            const errorMessage = error?.response?.data?.message || "Failed to load files";
+            notification.error({ message: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -83,7 +84,7 @@ const FileManager: React.FC = () => {
     const handleUpload = async (values: any) => {
         try {
             setLoading(true);
-            
+
             if (uploadType === "url") {
                 const response = await fileManagerService.createUrlFile({
                     name: values.name,
@@ -170,9 +171,10 @@ const FileManager: React.FC = () => {
             } else {
                 message.error(response.message || "Failed to delete file");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Delete error:", error);
-            message.error("Failed to delete file");
+            const errorMessage = error?.response?.data?.message || "Failed to delete file";
+            message.error(errorMessage);
         }
     };
 
@@ -244,7 +246,7 @@ const FileManager: React.FC = () => {
                             onClick={() => handleGenerateQR(record)}
                         />
                     </Tooltip>
-                    <Tooltip title="View">
+                  {record.type==="url"&&  <Tooltip title="View">
                         <Button
                             icon={<EyeOutlined />}
                             size="small"
@@ -256,8 +258,8 @@ const FileManager: React.FC = () => {
                                 }
                             }}
                         />
-                    </Tooltip>
-                    <Tooltip title="Download">
+                    </Tooltip>}
+                    {record.type !== "url" && <Tooltip title="Download">
                         <Button
                             icon={<DownloadOutlined />}
                             size="small"
@@ -272,12 +274,13 @@ const FileManager: React.FC = () => {
                                     a.click();
                                     window.URL.revokeObjectURL(url);
                                     document.body.removeChild(a);
-                                } catch (error) {
-                                    message.error("Failed to download file");
+                                } catch (error: any) {
+                                    const errorMessage = error?.response?.data?.message || "Failed to download file";
+                                    message.error(errorMessage);
                                 }
                             }}
                         />
-                    </Tooltip>
+                    </Tooltip>}
                     <Popconfirm
                         title="Are you sure you want to delete this file?"
                         onConfirm={() => handleDeleteFile(record._id)}
@@ -578,19 +581,19 @@ const FileManager: React.FC = () => {
                                         <Text type="secondary">{uploadedFile.description}</Text>
                                     </div>
 
-                        <div className="flex justify-center mb-6">
-                            <QRCodeSVG
-                                value={`${window.location.origin}/qr/${uploadedFile._id}`}
-                                size={200}
-                                level="M"
-                            />
-                        </div>
+                                    <div className="flex justify-center mb-6">
+                                        <QRCodeSVG
+                                            value={`${window.location.origin}/qr/${uploadedFile._id}`}
+                                            size={200}
+                                            level="M"
+                                        />
+                                    </div>
 
-                        <div className="text-center mb-4">
-                            <Text type="secondary">QR URL: </Text>
-                            <Text code copyable>{`${window.location.origin}/qr/${uploadedFile._id}`}</Text>
-                        </div>
-                       
+                                    <div className="text-center mb-4">
+                                        <Text type="secondary">QR URL: </Text>
+                                        <Text code copyable>{`${window.location.origin}/qr/${uploadedFile._id}`}</Text>
+                                    </div>
+
 
                                     <div className="text-left  mx-auto mb-6">
                                         <Text strong>File Details:</Text>
@@ -664,13 +667,7 @@ const FileManager: React.FC = () => {
                                 <Option value="image">Images</Option>
                                 <Option value="url">URLs</Option>
                             </Select>
-                            <Button
-                                type="primary"
-                                icon={<QrcodeOutlined />}
-                                onClick={() => setScannerVisible(true)}
-                            >
-                                Scan QR
-                            </Button>
+
                         </div>
 
                         <Table
@@ -722,7 +719,7 @@ const FileManager: React.FC = () => {
                             <Text type="secondary">QR URL: </Text>
                             <Text code copyable>{`${window.location.origin}/qr/${selectedFileForQR._id}`}</Text>
                         </div>
-                       
+
 
                         <Divider />
 
@@ -765,10 +762,7 @@ const FileManager: React.FC = () => {
                 )}
             </Modal>
 
-            <QRScanner
-                visible={scannerVisible}
-                onClose={() => setScannerVisible(false)}
-            />
+
         </div>
     );
 };

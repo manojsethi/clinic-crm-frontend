@@ -46,7 +46,7 @@ export const Registration: React.FC = () => {
   const { socket, consumeQR: socketConsumeQR, joinRoom } = useSocket();
   const { clearRegistrationContext } = useRegistrationContext();
   const tokenId = searchParams.get("token");
-  const roomId = searchParams.get("roomId");
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   // Function to calculate age from date of birth
   const calculateAge = (dob: dayjs.Dayjs | null) => {
@@ -56,19 +56,34 @@ export const Registration: React.FC = () => {
     }
 
     const today = dayjs();
-    const age = today.diff(dob, "year");
+    const days = today.diff(dob, "day");
+    const years = Math.floor(days / 365);
+    const remainingDays = days % 365;
+    const months = Math.floor(remainingDays / 30);
+    const remainingDaysInMonth = remainingDays % 30;
 
-    if (age === 0) {
-      // If less than 1 year, show months
-      const months = today.diff(dob, "month");
+    // Format age with years, months, and days
+    if (years === 0) {
       if (months === 0) {
-        const days = today.diff(dob, "day");
-        setCalculatedAge(`${days} days old`);
+        if (days === 0) {
+          setCalculatedAge("Less than 1 day old");
+        } else if (days === 1) {
+          setCalculatedAge("1 day old");
+        } else {
+          setCalculatedAge(`${days} days old`);
+        }
+      } else if (months === 1) {
+        setCalculatedAge(remainingDaysInMonth === 0 ? "1 month old" : `1 month ${remainingDaysInMonth} days old`);
       } else {
-        setCalculatedAge(`${months} months old`);
+        setCalculatedAge(remainingDaysInMonth === 0 ? `${months} months old` : `${months} months ${remainingDaysInMonth} days old`);
       }
+    } else if (months === 0) {
+      setCalculatedAge(remainingDaysInMonth === 0 ? `${years} years old` : `${years} years ${remainingDaysInMonth} days old`);
     } else {
-      setCalculatedAge(`${age} years old`);
+      const parts = [`${years} years`];
+      if (months > 0) parts.push(`${months} months`);
+      if (remainingDaysInMonth > 0) parts.push(`${remainingDaysInMonth} days`);
+      setCalculatedAge(`${parts.join(' ')} old`);
     }
   };
 
@@ -84,6 +99,15 @@ export const Registration: React.FC = () => {
       try {
         const tokenValidation = await qrService.validateToken(tokenId);
         setTokenValid(tokenValidation.token?.tokenInfo?.valid);
+        
+        // Extract roomId from token validation response
+        const tokenRoomId = tokenValidation.token?.tokenInfo?.roomId;
+        if (tokenRoomId) {
+          setRoomId(tokenRoomId);
+          console.log("🏠 RoomId extracted from token:", tokenRoomId);
+        } else {
+          console.log("⚠️ No roomId found in token");
+        }
 
         // Always try to fetch existing registration data, regardless of token validity
         try {
@@ -182,7 +206,7 @@ export const Registration: React.FC = () => {
       const registrationData: RegistrationData = {
         // Patient Information
         name: values.name,
-        age: values.dob ? dayjs().diff(values.dob, "year") : 0,
+        age: values.dob ? dayjs().diff(values.dob, "day") : 0, // Store age in days for precision
         sex: values.sex,
         dob: values.dob ? values.dob.format("YYYY-MM-DD") : undefined,
 

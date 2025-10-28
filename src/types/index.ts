@@ -71,6 +71,7 @@ export interface Registration {
   symptoms?: string;
   deviceId?: any;
   doctorId?: any;
+  doctorAdvice?: string;
   createdAt: string;
 }
 

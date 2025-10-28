@@ -44,11 +44,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <DashboardOutlined />,
       label: "Dashboard",
     },
+    ...(user?.role==="admin"?[{
+            key: "/users",
+            icon: <TeamOutlined />,
+            label: "User Management",
+          }]:[]),
 
     {
       key: "/registrations",
       icon: <UserOutlined />,
-      label: "Registrations",
+      label: "Patient Registrations",
     },
     ...(user?.role === "doctor"
       ? [
@@ -61,21 +66,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       : []),
     ...(user?.role === "admin"
       ? [
-          {
-            key: "/scan",
-            icon: <QrcodeOutlined />,
-            label: "QR Scanner",
-          },
-          {
-            key: "/users",
-            icon: <TeamOutlined />,
-            label: "User Management",
-          },
-          {
+         {
             key: "/devices",
             icon: <TeamOutlined />,
             label: "Devices",
           },
+          
+          {
+            key: "/scan",
+            icon: <QrcodeOutlined />,
+            label: "Registration Setup",
+          },
+          {
+            key: "/file-manager",
+            icon: <FileMarkdownFilled />,
+            label: "File Manager",
+          },
+          
+         
         ]
       : []),
   ];
