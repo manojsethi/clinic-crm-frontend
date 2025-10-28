@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.13",
     "@types/qrcode": "^1.5.5",
     "@types/socket.io-client": "^1.4.36",
+    "@uiw/react-md-editor": "^4.0.8",
     "antd": "^5.27.4",
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
