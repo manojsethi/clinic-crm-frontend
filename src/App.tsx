@@ -12,6 +12,7 @@ import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Registration } from "./pages/Registration";
 import { QRScanner } from "./pages/QRScanner";
+import { QRHandler } from "./pages/QRHandler";
 import { RegistrationSetup } from "./pages/RegistrationSetup";
 import { Dashboard } from "./pages/Dashboard";
 import { RegistrationManagement } from "./pages/RegistrationManagement";
@@ -38,6 +39,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Registration />} />
+            <Route path="/qr/:fileId" element={<QRHandler />} />
 
             {/* Protected Routes */}
             <Route

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Card,
     Button,
@@ -34,6 +34,8 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import type { UploadProps } from "antd";
 import type { FileItem } from "../types";
+import { fileManagerService } from "../services/api";
+import { QRScanner } from "../components/QRScanner";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -46,7 +48,7 @@ const FileManager: React.FC = () => {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [qrModalVisible, setQrModalVisible] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+    const [selectedFileForQR, setSelectedFileForQR] = useState<FileItem | null>(null);
     const [searchText, setSearchText] = useState("");
     const [filterType, setFilterType] = useState<string>("all");
     const [uploadType, setUploadType] = useState<"file" | "image" | "url">(
@@ -54,164 +56,128 @@ const FileManager: React.FC = () => {
     );
     const [currentStep, setCurrentStep] = useState(0);
     const [uploadedFile, setUploadedFile] = useState<FileItem | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [scannerVisible, setScannerVisible] = useState(false);
 
-    // Mock data for demonstration
-    const mockFiles: FileItem[] = [
-        {
-            _id: "1",
-            name: "Patient Report.pdf",
-            type: "file",
-            size: 1024000,
-            mimeType: "application/pdf",
-            description: "Patient medical report",
-            tags: ["medical", "report"],
-            createdAt: "2024-01-15T10:30:00Z",
-            updatedAt: "2024-01-15T10:30:00Z",
-            createdBy: "doctor1",
-            qrCode: "qr_code_1",
-            isActive: true,
-        },
-        {
-            _id: "2",
-            name: "X-Ray Image",
-            type: "image",
-            size: 2048000,
-            mimeType: "image/jpeg",
-            description: "Chest X-ray image",
-            tags: ["xray", "chest"],
-            createdAt: "2024-01-14T14:20:00Z",
-            updatedAt: "2024-01-14T14:20:00Z",
-            createdBy: "doctor1",
-            qrCode: "qr_code_2",
-            isActive: true,
-        },
-        {
-            _id: "3",
-            name: "Medical Guidelines",
-            type: "url",
-            url: "https://example.com/guidelines",
-            description: "External medical guidelines",
-            tags: ["guidelines", "reference"],
-            createdAt: "2024-01-13T09:15:00Z",
-            updatedAt: "2024-01-13T09:15:00Z",
-            createdBy: "doctor1",
-            qrCode: "qr_code_3",
-            isActive: true,
-        },
-    ];
+    // Load files from API
+    const loadFiles = async () => {
+        try {
+            setLoading(true);
+            const response = await fileManagerService.getFiles({
+                type: filterType === "all" ? undefined : filterType,
+                search: searchText || undefined,
+            });
+            setFiles(response.files);
+        } catch (error) {
+            console.error("Failed to load files:", error);
+            message.error("Failed to load files");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    React.useEffect(() => {
-        setFiles(mockFiles);
-    }, []);
+    useEffect(() => {
+        loadFiles();
+    }, [filterType, searchText]);
 
     const handleUpload = async (values: any) => {
         try {
-            
             setLoading(true);
-            if(uploadType==="url") {
+            
+            if (uploadType === "url") {
+                const response = await fileManagerService.createUrlFile({
+                    name: values.name,
+                    url: values.url,
+                    description: values.description,
+                    tags: values.tags || [],
+                });
 
+                if (response.success && response.file) {
+                    setUploadedFile(response.file);
+                    setFiles((prev) => [response.file!, ...prev]);
+                    setCurrentStep(2);
+                    message.success("URL added successfully!");
+                } else {
+                    message.error(response.message || "Failed to add URL");
+                }
             }
-            console.log(values,"heyVALUES")
-
-            // Simulate API call
-            // await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // let newFile: FileItem;
-
-            // if (uploadType === "url") {
-            //     newFile = {
-            //         _id: Date.now().toString(),
-            //         name: values.name,
-            //         type: "url",
-            //         url: values.url,
-            //         description: values.description || "",
-            //         tags: values.tags || [],
-            //         createdAt: new Date().toISOString(),
-            //         updatedAt: new Date().toISOString(),
-            //         createdBy: "current_user",
-            //         qrCode: `qr_${Date.now()}`,
-            //         isActive: true,
-            //     };
-            // } else {
-            //     // For file/image uploads, we'll handle this in the customRequest
-            //     return;
-            // }
-
-            // setUploadedFile(newFile);
-            // setFiles((prev) => [newFile, ...prev]);
-            // setCurrentStep(2); // Move to QR generation step
-            // message.success(
-            //     `${uploadType === "url" ? "URL" : "File"} uploaded successfully!`
-            // );
         } catch (error) {
+            console.error("Upload error:", error);
             message.error(`Failed to upload ${uploadType}`);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleFileUpload: UploadProps["customRequest"] = async ({
-        file,
-        onSuccess,
-        onError,
-    }) => {
+    const handleFileSelect = (file: File) => {
+        setSelectedFile(file);
+        return false; // Prevent auto upload
+    };
+
+    const handleUploadFile = async () => {
+        if (!selectedFile) {
+            message.error("Please select a file first");
+            return;
+        }
+
         try {
             setLoading(true);
 
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            formData.append("name", selectedFile.name);
+            formData.append("description", uploadForm.getFieldValue("description") || "");
+            formData.append("tags", JSON.stringify(uploadForm.getFieldValue("tags") || []));
 
-            const newFile: FileItem = {
-                _id: Date.now().toString(),
-                name: (file as File).name,
-                type: uploadType,
-                size: (file as File).size,
-                mimeType: (file as File).type,
-                description: uploadForm.getFieldValue("description") || "",
-                tags: uploadForm.getFieldValue("tags") || [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                createdBy: "current_user",
-                qrCode: `qr_${Date.now()}`,
-                isActive: true,
-            };
+            const response = await fileManagerService.uploadFile(formData);
 
-            setUploadedFile(newFile);
-            setFiles((prev) => [newFile, ...prev]);
-            setCurrentStep(2);
-            message.success("File uploaded successfully!");
-            onSuccess?.(newFile);
+            if (response.success && response.file) {
+                setUploadedFile(response.file);
+                setFiles((prev) => [response.file!, ...prev]);
+                setCurrentStep(2); // Go to scanner step
+                setSelectedFile(null); // Clear selected file
+                message.success("File uploaded successfully!");
+            } else {
+                message.error(response.message || "Failed to upload file");
+            }
         } catch (error) {
+            console.error("File upload error:", error);
             message.error("Failed to upload file");
-            onError?.(error as Error);
         } finally {
             setLoading(false);
         }
     };
 
     const handleGenerateQR = (file: FileItem) => {
-        setSelectedFile(file);
+        setSelectedFileForQR(file);
         setQrModalVisible(true);
     };
 
     const handleResetUpload = () => {
         setCurrentStep(0);
         setUploadedFile(null);
+        setSelectedFile(null);
         uploadForm.resetFields();
         setUploadType("file");
     };
 
-    const handleDeleteFile = (fileId: string) => {
-        setFiles((prev) => prev.filter((file) => file._id !== fileId));
-        message.success("File deleted successfully!");
+    const handleDeleteFile = async (fileId: string) => {
+        try {
+            const response = await fileManagerService.deleteFile(fileId);
+            if (response.success) {
+                setFiles((prev) => prev.filter((file) => file._id !== fileId));
+                message.success("File deleted successfully!");
+            } else {
+                message.error(response.message || "Failed to delete file");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            message.error("Failed to delete file");
+        }
     };
 
-    const filteredFiles = files.filter((file) => {
-        const matchesSearch =
-            file.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            file.description?.toLowerCase().includes(searchText.toLowerCase());
-        const matchesType = filterType === "all" || file.type === filterType;
-        return matchesSearch && matchesType;
-    });
+    // Files are already filtered by the API, so we can use them directly
+    const filteredFiles = files;
 
     const columns = [
         {
@@ -295,7 +261,21 @@ const FileManager: React.FC = () => {
                         <Button
                             icon={<DownloadOutlined />}
                             size="small"
-                            onClick={() => message.info("Download not implemented yet")}
+                            onClick={async () => {
+                                try {
+                                    const blob = await fileManagerService.downloadFile(record._id);
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = record.name;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                } catch (error) {
+                                    message.error("Failed to download file");
+                                }
+                            }}
                         />
                     </Tooltip>
                     <Popconfirm
@@ -316,9 +296,15 @@ const FileManager: React.FC = () => {
     const uploadProps: UploadProps = {
         name: "file",
         multiple: false,
-        customRequest: handleFileUpload,
-        showUploadList: false,
+        beforeUpload: handleFileSelect,
+        showUploadList: true,
         accept: "*/*",
+        fileList: selectedFile ? [{
+            uid: '1',
+            name: selectedFile.name,
+            status: 'done',
+            url: '',
+        }] : [],
     };
 
     return (
@@ -345,11 +331,11 @@ const FileManager: React.FC = () => {
                                     },
                                     {
                                         title: "Upload Content",
-                                        description: "Upload your file or add URL",
+                                        description: uploadType === "url" ? "Add URL details" : "Select file and upload",
                                     },
                                     {
-                                        title: "Generate Scanner",
-                                        description: "Create QR code for access",
+                                        title: "Scanner Ready",
+                                        description: "QR code generated for file access",
                                     },
                                 ]}
                                 className="mb-8"
@@ -469,69 +455,52 @@ const FileManager: React.FC = () => {
                                             : `Upload ${uploadType === "image" ? "Image" : "File"}`}
                                     </Title>
 
-                                    <Form
-                                        form={uploadForm}
-                                        layout="vertical"
-                                        onFinish={handleUpload}
-                                    >
-                                        {uploadType === "url" ? (
-                                            <>
-
-
-                                                <Form.Item
-                                                    name="url"
-                                                    label="URL"
-                                                    rules={[
-                                                        { required: true, message: "Please enter a URL" },
-                                                        {
-                                                            type: "url",
-                                                            message: "Please enter a valid URL",
-                                                        },
-                                                    ]}
-                                                >
-                                                    <Input
-                                                        prefix={<LinkOutlined />}
-                                                        placeholder="https://example.com"
-                                                    />
-                                                </Form.Item>
-                                            </>
-                                        ) : (
-                                            <Form.Item>
-                                                <Upload.Dragger {...uploadProps} className="mb-4">
-                                                    <p className="ant-upload-drag-icon">
-                                                        {uploadType === "image" ? (
-                                                            <PictureOutlined />
-                                                        ) : (
-                                                            <UploadOutlined />
-                                                        )}
-                                                    </p>
-                                                    <p className="ant-upload-text">
-                                                        Click or drag{" "}
-                                                        {uploadType === "image" ? "image" : "file"} to this
-                                                        area to upload
-                                                    </p>
-                                                    <p className="ant-upload-hint">
-                                                        {uploadType === "image"
-                                                            ? "Support for single image upload. JPG, PNG, GIF are supported."
-                                                            : "Support for single file upload. All file types are supported."}
-                                                    </p>
-                                                </Upload.Dragger>
+                                    {uploadType === "url" ? (
+                                        <Form
+                                            form={uploadForm}
+                                            layout="vertical"
+                                            onFinish={handleUpload}
+                                        >
+                                            <Form.Item
+                                                name="name"
+                                                label="Name"
+                                                rules={[
+                                                    { required: true, message: "Please enter a name" },
+                                                ]}
+                                            >
+                                                <Input
+                                                    prefix={<FileOutlined />}
+                                                    placeholder="Enter file name"
+                                                />
                                             </Form.Item>
-                                        )}
 
-                                        <Form.Item name="description" label="Description">
-                                            <TextArea
-                                                rows={3}
-                                                placeholder="Enter description (optional)"
-                                            />
-                                        </Form.Item>
+                                            <Form.Item
+                                                name="url"
+                                                label="URL"
+                                                rules={[
+                                                    { required: true, message: "Please enter a URL" },
+                                                    {
+                                                        type: "url",
+                                                        message: "Please enter a valid URL",
+                                                    },
+                                                ]}
+                                            >
+                                                <Input
+                                                    prefix={<LinkOutlined />}
+                                                    placeholder="https://example.com"
+                                                />
+                                            </Form.Item>
 
+                                            <Form.Item name="description" label="Description (Optional)">
+                                                <TextArea
+                                                    rows={3}
+                                                    placeholder="Enter description (optional)"
+                                                />
+                                            </Form.Item>
 
-
-                                        <Form.Item>
-                                            <Space>
-                                                <Button onClick={() => setCurrentStep(0)}>Back</Button>
-                                                {uploadType === "url" ? (
+                                            <Form.Item>
+                                                <Space>
+                                                    <Button onClick={() => setCurrentStep(0)}>Back</Button>
                                                     <Button
                                                         type="primary"
                                                         htmlType="submit"
@@ -540,25 +509,65 @@ const FileManager: React.FC = () => {
                                                     >
                                                         Add URL
                                                     </Button>
-                                                ) : (
+                                                </Space>
+                                            </Form.Item>
+                                        </Form>
+                                    ) : (
+                                        <div>
+                                            <Form form={uploadForm} layout="vertical">
+                                                <Form.Item>
+                                                    <Upload.Dragger {...uploadProps} className="mb-4">
+                                                        <p className="ant-upload-drag-icon">
+                                                            {uploadType === "image" ? (
+                                                                <PictureOutlined />
+                                                            ) : (
+                                                                <UploadOutlined />
+                                                            )}
+                                                        </p>
+                                                        <p className="ant-upload-text">
+                                                            Click or drag{" "}
+                                                            {uploadType === "image" ? "image" : "file"} to this
+                                                            area to select
+                                                        </p>
+                                                        <p className="ant-upload-hint">
+                                                            {uploadType === "image"
+                                                                ? "Support for single image upload. JPG, PNG, GIF are supported."
+                                                                : "Support for single file upload. All file types are supported."}
+                                                        </p>
+                                                    </Upload.Dragger>
+                                                </Form.Item>
+
+                                                <Form.Item name="description" label="Description (Optional)">
+                                                    <TextArea
+                                                        rows={3}
+                                                        placeholder="Enter description (optional)"
+                                                    />
+                                                </Form.Item>
+                                            </Form>
+
+                                            <div className="text-center mt-6">
+                                                <Space>
+                                                    <Button onClick={() => setCurrentStep(0)}>Back</Button>
                                                     <Button
                                                         type="primary"
-                                                        onClick={() => setCurrentStep(2)}
-                                                        disabled={!uploadedFile}
+                                                        onClick={handleUploadFile}
+                                                        loading={loading}
+                                                        disabled={!selectedFile}
+                                                        icon={<UploadOutlined />}
                                                     >
-                                                        Continue to Scanner
+                                                        Upload & Generate Scanner
                                                     </Button>
-                                                )}
-                                            </Space>
-                                        </Form.Item>
-                                    </Form>
+                                                </Space>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {currentStep === 2 && uploadedFile && (
                                 <div className="text-center">
                                     <Title level={3} className="mb-6">
-                                        Generate Scanner
+                                        Scanner Generated
                                     </Title>
 
                                     <div className="mb-6">
@@ -569,13 +578,19 @@ const FileManager: React.FC = () => {
                                         <Text type="secondary">{uploadedFile.description}</Text>
                                     </div>
 
-                                    <div className="flex justify-center mb-6">
-                                        <QRCodeSVG
-                                            value={uploadedFile.qrCode || uploadedFile._id}
-                                            size={200}
-                                            level="M"
-                                        />
-                                    </div>
+                        <div className="flex justify-center mb-6">
+                            <QRCodeSVG
+                                value={`${window.location.origin}/qr/${uploadedFile._id}`}
+                                size={200}
+                                level="M"
+                            />
+                        </div>
+
+                        <div className="text-center mb-4">
+                            <Text type="secondary">QR URL: </Text>
+                            <Text code copyable>{`${window.location.origin}/qr/${uploadedFile._id}`}</Text>
+                        </div>
+                       
 
                                     <div className="text-left  mx-auto mb-6">
                                         <Text strong>File Details:</Text>
@@ -620,7 +635,7 @@ const FileManager: React.FC = () => {
                                             icon={<QrcodeOutlined />}
                                             onClick={() => handleGenerateQR(uploadedFile)}
                                         >
-                                            View Full Scanner
+                                            View Scanner Details
                                         </Button>
                                     </Space>
                                 </div>
@@ -649,6 +664,13 @@ const FileManager: React.FC = () => {
                                 <Option value="image">Images</Option>
                                 <Option value="url">URLs</Option>
                             </Select>
+                            <Button
+                                type="primary"
+                                icon={<QrcodeOutlined />}
+                                onClick={() => setScannerVisible(true)}
+                            >
+                                Scan QR
+                            </Button>
                         </div>
 
                         <Table
@@ -678,23 +700,29 @@ const FileManager: React.FC = () => {
                 ]}
                 width={500}
             >
-                {selectedFile && (
+                {selectedFileForQR && (
                     <div className="text-center">
                         <div className="mb-4">
                             <Text strong className="text-lg">
-                                {selectedFile.name}
+                                {selectedFileForQR.name}
                             </Text>
                             <br />
-                            <Text type="secondary">{selectedFile.description}</Text>
+                            <Text type="secondary">{selectedFileForQR.description}</Text>
                         </div>
 
                         <div className="flex justify-center mb-4">
                             <QRCodeSVG
-                                value={selectedFile.qrCode || selectedFile._id}
+                                value={`${window.location.origin}/qr/${selectedFileForQR._id}`}
                                 size={200}
                                 level="M"
                             />
                         </div>
+
+                        <div className="text-center mb-4">
+                            <Text type="secondary">QR URL: </Text>
+                            <Text code copyable>{`${window.location.origin}/qr/${selectedFileForQR._id}`}</Text>
+                        </div>
+                       
 
                         <Divider />
 
@@ -703,29 +731,29 @@ const FileManager: React.FC = () => {
                             <div className="mt-2 space-y-1">
                                 <div>
                                     <Text strong>Type:</Text>{" "}
-                                    <Tag>{selectedFile.type.toUpperCase()}</Tag>
+                                    <Tag>{selectedFileForQR.type.toUpperCase()}</Tag>
                                 </div>
-                                {selectedFile.size && (
+                                {selectedFileForQR.size && (
                                     <div>
                                         <Text strong>Size:</Text>{" "}
-                                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                        {(selectedFileForQR.size / 1024 / 1024).toFixed(2)} MB
                                     </div>
                                 )}
-                                {selectedFile.url && (
+                                {selectedFileForQR.url && (
                                     <div>
                                         <Text strong>URL:</Text>{" "}
-                                        <Text code>{selectedFile.url}</Text>
+                                        <Text code>{selectedFileForQR.url}</Text>
                                     </div>
                                 )}
                                 <div>
                                     <Text strong>Created:</Text>{" "}
-                                    {new Date(selectedFile.createdAt).toLocaleString()}
+                                    {new Date(selectedFileForQR.createdAt).toLocaleString()}
                                 </div>
-                                {selectedFile.tags && selectedFile.tags.length > 0 && (
+                                {selectedFileForQR.tags && selectedFileForQR.tags.length > 0 && (
                                     <div>
                                         <Text strong>Tags:</Text>
                                         <div className="mt-1">
-                                            {selectedFile.tags.map((tag) => (
+                                            {selectedFileForQR.tags.map((tag) => (
                                                 <Tag key={tag}>{tag}</Tag>
                                             ))}
                                         </div>
@@ -736,6 +764,11 @@ const FileManager: React.FC = () => {
                     </div>
                 )}
             </Modal>
+
+            <QRScanner
+                visible={scannerVisible}
+                onClose={() => setScannerVisible(false)}
+            />
         </div>
     );
 };

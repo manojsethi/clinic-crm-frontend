@@ -189,7 +189,6 @@ export interface FileItem {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
-  qrCode?: string;
   isActive: boolean;
 }
 
@@ -205,6 +204,7 @@ export interface UploadRequest {
 export interface FileManagerResult {
   success: boolean;
   message?: string;
+  file?: FileItem;
   data?: {
     file?: FileItem;
     files?: FileItem[];

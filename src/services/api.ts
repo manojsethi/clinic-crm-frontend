@@ -11,6 +11,8 @@ import {
   CreateMappingRequest,
   MappingResult,
   Pagination,
+  FileItem,
+  FileManagerResult,
 } from "../types";
 import { clearTokens, getAccessToken, getRefreshToken } from "../utils/token";
 
@@ -284,6 +286,75 @@ export const deviceDoctorMappingService = {
     );
     return response.data;
   },
+};
+
+export const fileManagerService = {
+  uploadFile: async (formData: FormData): Promise<FileManagerResult> => {
+    const response: AxiosResponse<FileManagerResult> = await api.post(
+      "/files/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  createUrlFile: async (data: {
+    name: string;
+    url: string;
+    description?: string;
+    tags?: string[];
+  }): Promise<FileManagerResult> => {
+    const response: AxiosResponse<FileManagerResult> = await api.post(
+      "/files/url",
+      data
+    );
+    return response.data;
+  },
+
+  getFiles: async (params?: {
+    type?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<{ files: FileItem[]; pagination: Pagination }> => {
+    const response: AxiosResponse<{
+      files: FileItem[];
+      pagination: Pagination;
+    }> = await api.get("/files", { params });
+    return response.data;
+  },
+
+  getFileById: async (id: string): Promise<{ file: FileItem }> => {
+    const response: AxiosResponse<{ file: FileItem }> = await api.get(
+      `/files/${id}`
+    );
+    return response.data;
+  },
+
+  downloadFile: async (id: string): Promise<Blob> => {
+    const response: AxiosResponse<Blob> = await api.get(`/files/${id}/download`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  deleteFile: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response: AxiosResponse<{ success: boolean; message: string }> =
+      await api.delete(`/files/${id}`);
+    return response.data;
+  },
+
+  accessFileByQR: async (fileId: string): Promise<{ success: boolean; message: string; file: FileItem }> => {
+    const response: AxiosResponse<{ success: boolean; message: string; file: FileItem }> = await api.get(
+      `/files/qr/${fileId}`
+    );
+    return response.data;
+  },
+
 };
 
 export default api;
