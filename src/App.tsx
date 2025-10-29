@@ -36,107 +36,116 @@ function App() {
         <RegistrationProvider>
           <Router>
             <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Registration />} />
-            <Route path="/qr/:fileId" element={<QRHandler />} />
+              {/* Public Routes */}
+              <Route
+                path="/login"
+                element={
+                  <ProtectedRoute isAuthenticate={false}>
+                    <Login />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/register" element={<Registration />} />
+              <Route path="/qr/:fileId" element={<QRHandler />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Navigate to="/dashboard" replace />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Navigate to="/dashboard" replace />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/registrations"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <RegistrationManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/file-manager"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <FileManager />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/registrations"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <RegistrationManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/file-manager"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <FileManager />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/registration-detail/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <RegistrationDetail />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/registration-detail/:id"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <RegistrationDetail />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/scan"
-              element={
-                <ProtectedRoute>
-                  <QRScanner />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/scan"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <QRScanner />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/registration-setup"
-              element={
-                <ProtectedRoute>
-                  <RegistrationSetup />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/registration-setup"
+                element={
+                  <ProtectedRoute>
+                    <RegistrationSetup />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <UserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Layout>
+                      <UserManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/devices"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <Layout>
-                    <Devices />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="/devices"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Layout>
+                      <Devices />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Router>
         </RegistrationProvider>

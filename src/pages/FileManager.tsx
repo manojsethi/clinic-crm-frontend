@@ -30,6 +30,7 @@ import {
     DownloadOutlined,
     PlusOutlined,
     SearchOutlined,
+    FileImageOutlined,
 } from "@ant-design/icons";
 import { QRCodeSVG } from "qrcode.react";
 import type { UploadProps } from "antd";
@@ -154,6 +155,99 @@ const FileManager: React.FC = () => {
         setQrModalVisible(true);
     };
 
+    const handleDownloadQR = (file: FileItem) => {
+        // Find the QR code SVG element in the modal
+        const qrSvg = document.querySelector('.qr-code-svg') as SVGElement;
+        if (!qrSvg) {
+            message.error('QR code not found. Please generate QR code first.');
+            return;
+        }
+        
+        // Clone the SVG element
+        const clonedSvg = qrSvg.cloneNode(true) as SVGElement;
+        
+        // Create a container div
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.top = '-9999px';
+        container.style.width = '400px';
+        container.style.height = '500px';
+        container.style.backgroundColor = 'white';
+        container.style.padding = '20px';
+        container.style.boxSizing = 'border-box';
+        
+        // Add title
+        const title = document.createElement('div');
+        title.textContent = `QR Code for ${file.name}`;
+        title.style.textAlign = 'center';
+        title.style.fontSize = '18px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '10px';
+        title.style.color = 'black';
+        
+        // Add subtitle
+        const subtitle = document.createElement('div');
+        subtitle.textContent = 'Scan to access file';
+        subtitle.style.textAlign = 'center';
+        subtitle.style.fontSize = '14px';
+        subtitle.style.color = 'gray';
+        subtitle.style.marginBottom = '20px';
+        
+        // Add QR code
+        clonedSvg.style.width = '100%';
+        clonedSvg.style.height = 'auto';
+        clonedSvg.style.maxWidth = '360px';
+        clonedSvg.style.margin = '0 auto';
+        clonedSvg.style.display = 'block';
+        
+        container.appendChild(title);
+        container.appendChild(subtitle);
+        container.appendChild(clonedSvg);
+        document.body.appendChild(container);
+        
+        // Use html2canvas to convert to image
+        import('html2canvas').then(html2canvas => {
+            html2canvas.default(container, {
+                width: 400,
+                height: 500,
+                backgroundColor: '#ffffff',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `QR_${file.name.replace(/[^a-z0-9]/gi, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                document.body.removeChild(container);
+                message.success('QR code downloaded successfully!');
+            }).catch(() => {
+                // Fallback: download as SVG
+                const svgData = new XMLSerializer().serializeToString(clonedSvg);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const svgUrl = URL.createObjectURL(svgBlob);
+                const link = document.createElement('a');
+                link.download = `QR_${file.name.replace(/[^a-z0-9]/gi, '_')}.svg`;
+                link.href = svgUrl;
+                link.click();
+                URL.revokeObjectURL(svgUrl);
+                document.body.removeChild(container);
+                message.success('QR code downloaded successfully!');
+            });
+        }).catch(() => {
+            // Fallback without html2canvas
+            const svgData = new XMLSerializer().serializeToString(clonedSvg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            const link = document.createElement('a');
+            link.download = `QR_${file.name.replace(/[^a-z0-9]/gi, '_')}.svg`;
+            link.href = svgUrl;
+            link.click();
+            URL.revokeObjectURL(svgUrl);
+            document.body.removeChild(container);
+            message.success('QR code downloaded successfully!');
+        });
+    };
+
     const handleResetUpload = () => {
         setCurrentStep(0);
         setUploadedFile(null);
@@ -246,6 +340,13 @@ const FileManager: React.FC = () => {
                             onClick={() => handleGenerateQR(record)}
                         />
                     </Tooltip>
+                    <Tooltip title="Download QR Code">
+                        <Button
+                            icon={<FileImageOutlined />}
+                            size="small"
+                            onClick={() => handleDownloadQR(record)}
+                        />
+                    </Tooltip>
                   {record.type==="url"&&  <Tooltip title="View">
                         <Button
                             icon={<EyeOutlined />}
@@ -259,7 +360,7 @@ const FileManager: React.FC = () => {
                             }}
                         />
                     </Tooltip>}
-                    {record.type !== "url" && <Tooltip title="Download">
+                    {record.type !== "url" && <Tooltip title="Download File">
                         <Button
                             icon={<DownloadOutlined />}
                             size="small"
@@ -586,14 +687,11 @@ const FileManager: React.FC = () => {
                                             value={`${window.location.origin}/qr/${uploadedFile._id}`}
                                             size={200}
                                             level="M"
+                                            className="qr-code-svg"
                                         />
                                     </div>
 
-                                    <div className="text-center mb-4">
-                                        <Text type="secondary">QR URL: </Text>
-                                        <Text code copyable>{`${window.location.origin}/qr/${uploadedFile._id}`}</Text>
-                                    </div>
-
+                                   
 
                                     <div className="text-left  mx-auto mb-6">
                                         <Text strong>File Details:</Text>
@@ -640,6 +738,12 @@ const FileManager: React.FC = () => {
                                         >
                                             View Scanner Details
                                         </Button>
+                                        <Button
+                                            icon={<DownloadOutlined />}
+                                            onClick={() => handleDownloadQR(uploadedFile)}
+                                        >
+                                            Download QR Code
+                                        </Button>
                                     </Space>
                                 </div>
                             )}
@@ -667,7 +771,6 @@ const FileManager: React.FC = () => {
                                 <Option value="image">Images</Option>
                                 <Option value="url">URLs</Option>
                             </Select>
-
                         </div>
 
                         <Table
@@ -694,6 +797,14 @@ const FileManager: React.FC = () => {
                     <Button key="close" onClick={() => setQrModalVisible(false)}>
                         Close
                     </Button>,
+                    <Button 
+                        key="download" 
+                        type="primary" 
+                        icon={<DownloadOutlined />}
+                        onClick={() => selectedFileForQR && handleDownloadQR(selectedFileForQR)}
+                    >
+                        Download QR Code
+                    </Button>,
                 ]}
                 width={500}
             >
@@ -712,15 +823,9 @@ const FileManager: React.FC = () => {
                                 value={`${window.location.origin}/qr/${selectedFileForQR._id}`}
                                 size={200}
                                 level="M"
+                                className="qr-code-svg"
                             />
                         </div>
-
-                        <div className="text-center mb-4">
-                            <Text type="secondary">QR URL: </Text>
-                            <Text code copyable>{`${window.location.origin}/qr/${selectedFileForQR._id}`}</Text>
-                        </div>
-
-
                         <Divider />
 
                         <div className="text-left">

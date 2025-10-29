@@ -12,25 +12,26 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
+  tokens: { accessToken: string; refreshToken: string };
 }
 
 export interface RegistrationData {
   // Patient Information
   name: string;
   age: number;
-  sex: 'Male' | 'Female' | 'Other';
+  sex: "Male" | "Female" | "Other";
   dob?: string;
-  
+
   // Contact Information
   address?: string;
   contactNumber?: string;
   email?: string;
-  
+
   // Medical Information
   allergies?: string;
   currentMedicalIllness?: string;
   symptoms?: string;
-  
+
   // Legacy fields for backward compatibility
   deviceId?: string;
   doctorId?: string;
@@ -61,7 +62,7 @@ export interface Registration {
   tokenId: any;
   name: string;
   age: number;
-  sex: 'Male' | 'Female' | 'Other';
+  sex: "Male" | "Female" | "Other";
   dob?: string;
   address?: string;
   contactNumber?: string;
@@ -180,7 +181,7 @@ export interface MappingResult {
 export interface FileItem {
   _id: string;
   name: string;
-  type: 'file' | 'image' | 'url';
+  type: "file" | "image" | "url";
   size?: number;
   url?: string;
   filePath?: string;
@@ -195,7 +196,7 @@ export interface FileItem {
 
 export interface UploadRequest {
   name: string;
-  type: 'file' | 'image' | 'url';
+  type: "file" | "image" | "url";
   description?: string;
   tags?: string[];
   url?: string;

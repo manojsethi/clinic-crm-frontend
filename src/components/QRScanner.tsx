@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Button, message, Typography, Card, Tag, Spin, Input } from 'antd';
-import { LinkOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { LinkOutlined, QrcodeOutlined, DownloadOutlined } from '@ant-design/icons';
 import { fileManagerService } from '../services/api';
 import type { FileItem } from '../types';
 
@@ -9,12 +9,14 @@ const { Text } = Typography;
 interface QRScannerProps {
   visible: boolean;
   onClose: () => void;
+  title?: string;
 }
 
-export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose }) => {
+export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose, title = "QR Code Scanner" }) => {
   const [scanning, setScanning] = useState(false);
   const [scannedFile, setScannedFile] = useState<FileItem | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -111,9 +113,32 @@ export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose }) => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!scannedFile) return;
+    
+    try {
+      setDownloading(true);
+      const blob = await fileManagerService.downloadFile(scannedFile._id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = scannedFile.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      message.success('File downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      message.error('Failed to download file');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <Modal
-      title="QR Code Scanner"
+      title={title}
       open={visible}
       onCancel={handleClose}
       footer={[
@@ -123,6 +148,17 @@ export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose }) => {
         scannedFile && scannedFile.type === 'url' && (
           <Button key="open" type="primary" onClick={handleOpenUrl} icon={<LinkOutlined />}>
             Open URL
+          </Button>
+        ),
+        scannedFile && scannedFile.type !== 'url' && (
+          <Button 
+            key="download" 
+            type="primary" 
+            onClick={handleDownload} 
+            icon={<DownloadOutlined />}
+            loading={downloading}
+          >
+            Download File
           </Button>
         ),
         scannedFile && (
@@ -239,7 +275,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose }) => {
               </div>
             </Card>
 
-            {scannedFile.type === 'url' && (
+            {scannedFile.type === 'url' ? (
               <div className="text-center">
                 <Button 
                   type="primary" 
@@ -248,6 +284,18 @@ export const QRScanner: React.FC<QRScannerProps> = ({ visible, onClose }) => {
                   onClick={handleOpenUrl}
                 >
                   Open URL in New Tab
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <Button 
+                  type="primary" 
+                  size="large" 
+                  icon={<DownloadOutlined />}
+                  onClick={handleDownload}
+                  loading={downloading}
+                >
+                  Download File
                 </Button>
               </div>
             )}

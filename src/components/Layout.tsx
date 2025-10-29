@@ -16,6 +16,7 @@ import {
   MenuUnfoldOutlined,
   QrcodeOutlined,
   FileMarkdownFilled,
+  FileMarkdownOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -47,13 +48,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     ...(user?.role==="admin"?[{
             key: "/users",
             icon: <TeamOutlined />,
-            label: "User Management",
+            label: "Staff Management",
           }]:[]),
 
     {
       key: "/registrations",
       icon: <UserOutlined />,
-      label: "Patient Registrations",
+      label: "Patients",
     },
     ...(user?.role === "doctor"
       ? [
@@ -69,7 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
          {
             key: "/devices",
             icon: <TeamOutlined />,
-            label: "Devices",
+            label: "Clinic Devices",
           },
           
           {
@@ -79,7 +80,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           },
           {
             key: "/file-manager",
-            icon: <FileMarkdownFilled />,
+            icon: <FileMarkdownOutlined />,
             label: "File Manager",
           },
           

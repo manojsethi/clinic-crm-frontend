@@ -14,7 +14,7 @@ import {
   FileItem,
   FileManagerResult,
 } from "../types";
-import { clearTokens, getAccessToken, getRefreshToken } from "../utils/token";
+import { clearTokens, clearUser, getAccessToken, getRefreshToken } from "../utils/token";
 
 const API_BASE_URL = `${import.meta.env.VITE_CLINIC_BACKEND_URL}/api`;
 
@@ -47,14 +47,16 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
+debugger
+    if (error.response?.status === 401 && !originalRequest._retry||error.response?.status === 403 && !originalRequest._retry) {
+      debugger
       originalRequest._retry = true;
 
       try {
         const refreshToken = getRefreshToken();
         if (refreshToken) {
-          const response = await axios.post(
+          try {
+             const response = await axios.post(
             `${API_BASE_URL}/auth/refresh`,
             {},
             {
@@ -67,10 +69,17 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
             return api(originalRequest);
           }
+          } catch (error) {
+            localStorage.clear();
+            window.location.href='/login'
+          }
+         
         }
+        throw new Error()
       } catch (refreshError) {
         // Refresh failed, redirect to login
         clearTokens();
+        clearUser();
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }

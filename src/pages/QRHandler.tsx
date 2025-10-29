@@ -53,12 +53,16 @@ export const QRHandler: React.FC = () => {
           }
         }
         
-        // If it's a URL type file, automatically redirect after a short delay
-        if (response.file.type === 'url' && response.file.url) {
+        // If it's a URL type file, automatically redirect immediately
+        if (response.file.type === 'url' && response.file.url && response.file.url.trim() !== '') {
           message.success(`Redirecting to: ${response.file.name}`);
-          setTimeout(() => {
-            window.open(response.file.url, '_blank');
-          }, 2000); // 2 second delay to show the file info
+          // Redirect immediately without showing details
+          window.open(response.file.url, '_blank');
+          return; // Exit early to prevent showing the details page
+        } else if (response.file.type === 'url' && (!response.file.url || response.file.url.trim() === '')) {
+          // URL file but no valid URL
+          setError('This file contains an invalid or empty URL');
+          return;
         }
       } else {
         setError(response.message || 'File not found');
@@ -111,6 +115,30 @@ export const QRHandler: React.FC = () => {
           <Spin size="large" />
           <div className="mt-4">
             <Text>Loading file information...</Text>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show redirecting message for URL files (only if we have a valid URL)
+  if (file?.type === 'url' && file?.url && file.url.trim() !== '') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">
+            <LinkOutlined className="text-green-500" />
+          </div>
+          <Title level={2} className="mb-2">
+            Redirecting...
+          </Title>
+          <Text type="secondary" className="text-lg">
+            Opening {file.name} in a new tab
+          </Text>
+          <div className="mt-4">
+            <Button type="primary" onClick={handleGoHome}>
+              Go to Home
+            </Button>
           </div>
         </div>
       </div>

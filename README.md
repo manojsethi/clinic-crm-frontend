@@ -6,10 +6,13 @@ A modern React-based frontend for the Clinic Registration System, built with Typ
 
 - **Authentication System**: Secure login with JWT tokens and automatic refresh
 - **Real-time QR Updates**: WebSocket integration for live QR code updates
-- **Role-based Access**: Admin and Staff role management
+- **Role-based Access**: Admin, Staff, and Doctor role management
 - **Patient Registration**: Public registration form accessible via QR code
 - **Registration Management**: View and manage patient registrations
+- **File Management**: Upload, organize, and share files with QR codes
+- **QR Code System**: Generate, scan, and download QR codes
 - **User Management**: Admin-only user account management
+- **Device Management**: Track and manage clinic devices
 - **Responsive Design**: Mobile-friendly interface with TailwindCSS
 
 ## 🛠 Tech Stack
@@ -34,8 +37,14 @@ src/
 │   ├── Login.tsx       # Staff/Admin login
 │   ├── Registration.tsx # Patient registration
 │   ├── Dashboard.tsx   # Main dashboard
+│   ├── FileManager.tsx # File management with QR codes
+│   ├── QRHandler.tsx   # QR code file access
+│   ├── QRScanner.tsx   # QR code scanner page
 │   ├── RegistrationManagement.tsx # Registration list
-│   └── UserManagement.tsx # User management (Admin)
+│   ├── RegistrationDetail.tsx # Registration details
+│   ├── RegistrationSetup.tsx # Registration setup
+│   ├── UserManagement.tsx # User management (Admin)
+│   └── Devices.tsx     # Device management (Admin)
 ├── context/            # React Context
 │   └── AuthContext.tsx # Authentication context
 ├── services/           # API services
@@ -107,15 +116,32 @@ const newSocket = io('http://localhost:4000');
    - Connection status monitoring
    - Quick action buttons
 
-2. **Registration Management** (`/registrations`)
+2. **File Manager** (`/file-manager`)
+   - Upload files, images, and URLs
+   - Generate QR codes for files
+   - Download QR codes as images
+   - File organization and search
+   - QR code scanning functionality
+
+3. **Registration Management** (`/registrations`)
    - View all patient registrations
    - Search and filter functionality
    - Date range filtering
 
-3. **User Management** (`/users`) - Admin Only
+4. **QR Scanner** (`/scan`)
+   - Device and doctor selection
+   - QR code scanning interface
+   - Registration setup
+
+5. **User Management** (`/users`) - Admin Only
    - Create/delete user accounts
    - Role management
    - User list with actions
+
+6. **Device Management** (`/devices`) - Admin Only
+   - Manage clinic devices
+   - Device status tracking
+   - Device assignments
 
 ## 🔐 Authentication Flow
 

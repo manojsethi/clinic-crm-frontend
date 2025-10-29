@@ -120,13 +120,11 @@ export const QRScanner: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Modern Header */}
-      <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+      <div className="">
+        <div >
+          <div className="flex justify-between items-center pb-6">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                🏥
-              </div>
+            
               <div>
                 <Title level={3} className="mb-0 text-gray-800">
                   Clinic Registration
