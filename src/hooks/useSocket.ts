@@ -26,7 +26,9 @@ export const useSocket = () => {
         console.log('[SOCKET] connecting to', backendUrl);
 
         const newSocket = io(backendUrl, {
-            transports: ['websocket'],
+            // Polling first, then upgrade — live proxies often break raw websocket-only
+            transports: ['polling', 'websocket'],
+            withCredentials: true,
         });
 
         newSocket.on('connect', () => {
