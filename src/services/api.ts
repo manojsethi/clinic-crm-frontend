@@ -14,7 +14,13 @@ import {
   FileItem,
   FileManagerResult,
 } from "../types";
-import { clearTokens, clearUser, getAccessToken, getRefreshToken } from "../utils/token";
+import {
+  clearTokens,
+  clearUser,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from "../utils/token";
 
 const API_BASE_URL = `${import.meta.env.VITE_CLINIC_BACKEND_URL}/api`;
 
@@ -47,37 +53,34 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-debugger
-    if (error.response?.status === 401 && !originalRequest._retry||error.response?.status === 403 && !originalRequest._retry) {
-      debugger
+    const status = error.response?.status;
+    const shouldRetry =
+      (status === 401 || status === 403) && !originalRequest._retry;
+
+    if (shouldRetry) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = getRefreshToken();
-        if (refreshToken) {
-          try {
-             const response = await axios.post(
-            `${API_BASE_URL}/auth/refresh`,
-            {},
-            {
-              withCredentials: true,
-            }
-          );
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
 
-          if (response.data.user) {
-            // Update the original request with new token
-            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-            return api(originalRequest);
-          }
-          } catch (error) {
-            localStorage.clear();
-            window.location.href='/login'
-          }
-         
+        const newAccessToken = response.data.accessToken as string | undefined;
+        const existingRefresh = getRefreshToken();
+
+        if (newAccessToken && existingRefresh) {
+          setTokens(newAccessToken, existingRefresh);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
-        throw new Error()
+
+        if (response.data.user || newAccessToken) {
+          return api(originalRequest);
+        }
+
+        throw new Error("Refresh failed");
       } catch (refreshError) {
-        // Refresh failed, redirect to login
         clearTokens();
         clearUser();
         window.location.href = "/login";

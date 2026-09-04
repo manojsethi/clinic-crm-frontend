@@ -1,194 +1,118 @@
-# 🏥 Clinic CRM Frontend
+# Clinic Registration Frontend
 
-A modern React-based frontend for the Clinic Registration System, built with TypeScript, Ant Design, and TailwindCSS.
+Web UI for walk-in clinic patient registration. Staff and doctors sign in to manage devices, registration sessions, patient submissions, clinical advice, and shared files. Patients use a public form opened from a QR code—no patient account required.
 
-## 🚀 Features
+## Features
 
-- **Authentication System**: Secure login with JWT tokens and automatic refresh
-- **Real-time QR Updates**: WebSocket integration for live QR code updates
-- **Role-based Access**: Admin, Staff, and Doctor role management
-- **Patient Registration**: Public registration form accessible via QR code
-- **Registration Management**: View and manage patient registrations
-- **File Management**: Upload, organize, and share files with QR codes
-- **QR Code System**: Generate, scan, and download QR codes
-- **User Management**: Admin-only user account management
-- **Device Management**: Track and manage clinic devices
-- **Responsive Design**: Mobile-friendly interface with TailwindCSS
+- Staff login with access/refresh token handling
+- Role-based navigation for **admin**, **staff**, and **doctor**
+- Admin device and staff/user management
+- Registration setup: pair a clinic device with a doctor and show a live QR
+- Public patient intake form (demographics, contact, medical details)
+- Registration list with search and date filters; detail view with doctor advice
+- File manager for uploads and shareable QR links
+- Real-time QR updates over Socket.IO
 
-## 🛠 Tech Stack
+## Stack
 
-- **React 19** with TypeScript
-- **Ant Design** for UI components
-- **TailwindCSS** for styling and responsiveness
-- **Axios** with interceptors for API calls
-- **Socket.io Client** for real-time updates
-- **React Router** for navigation
-- **Vite** for build tooling
+- React 19 + TypeScript
+- Vite
+- Ant Design + Tailwind CSS
+- Axios
+- Socket.IO client
+- React Router
 
-## 📁 Project Structure
+## Prerequisites
 
-```
-src/
-├── components/          # Reusable components
-│   ├── QRDisplay.tsx   # QR code display component
-│   ├── Layout.tsx      # Main layout wrapper
-│   └── ProtectedRoute.tsx # Route protection
-├── pages/              # Page components
-│   ├── Login.tsx       # Staff/Admin login
-│   ├── Registration.tsx # Patient registration
-│   ├── Dashboard.tsx   # Main dashboard
-│   ├── FileManager.tsx # File management with QR codes
-│   ├── QRHandler.tsx   # QR code file access
-│   ├── QRScanner.tsx   # QR code scanner page
-│   ├── RegistrationManagement.tsx # Registration list
-│   ├── RegistrationDetail.tsx # Registration details
-│   ├── RegistrationSetup.tsx # Registration setup
-│   ├── UserManagement.tsx # User management (Admin)
-│   └── Devices.tsx     # Device management (Admin)
-├── context/            # React Context
-│   └── AuthContext.tsx # Authentication context
-├── services/           # API services
-│   └── api.ts         # Axios configuration & API calls
-├── hooks/              # Custom hooks
-│   └── useSocket.ts   # WebSocket hook
-├── utils/              # Utility functions
-│   └── token.ts       # Token management
-└── types/              # TypeScript definitions
-    └── index.ts        # Type definitions
-```
+- Node.js 18+
+- Backend API running (default `http://localhost:9003`)
 
-## 🚀 Getting Started
+## Quick start
 
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- Backend server running on port 4000
-
-### Installation
-
-1. Install dependencies:
 ```bash
+cp .env.example .env
+# Align URLs with your backend port and CORS settings
 npm install
-```
-
-2. Start the development server:
-```bash
 npm run dev
 ```
 
-3. Open your browser and navigate to `http://localhost:5173`
+App URL: `http://localhost:5173`
 
-## 🔧 Configuration
+## Environment
 
-### API Configuration
+Copy `.env.example` to `.env`:
 
-The API base URL is configured in `src/services/api.ts`:
-```typescript
-const API_BASE_URL = 'http://localhost:4000/api';
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `VITE_CLINIC_BACKEND_URL` | Backend origin (**no** `/api` suffix) | `http://localhost:9003` |
+| `VITE_CLINIC_CLIENT_URL` | This app’s public origin (used in registration links) | `http://localhost:5173` |
+
+Never commit `.env`. Only `.env.example` belongs in git.
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Vite development server |
+| `npm run build` | Typecheck + production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | ESLint |
+
+## Roles (UI)
+
+| Role | Main areas |
+|------|------------|
+| Admin | Dashboard, staff management, patients, devices, registration setup, file manager |
+| Doctor | Dashboard, own patients, advice editing, file manager |
+| Staff | Dashboard, patient registrations |
+| Patient | Public `/register?token=…` and public `/qr/:fileId` only |
+
+## Main routes
+
+| Path | Access | Purpose |
+|------|--------|---------|
+| `/login` | Public | Staff sign-in |
+| `/register` | Public | Patient intake via QR token |
+| `/qr/:fileId` | Public | Open shared file / link |
+| `/dashboard` | Authenticated | Landing / status |
+| `/registrations` | Authenticated | Patient list |
+| `/registration-detail/:id` | Authenticated | Registration detail + advice |
+| `/scan` | Admin (menu) | Start device–doctor registration session |
+| `/registration-setup` | Admin session | Live QR display |
+| `/users` | Admin | User management |
+| `/devices` | Admin | Clinic devices |
+| `/file-manager` | Admin / doctor (menu) | Files and shareable QR codes |
+
+## Project layout
+
+```
+src/
+├── components/   # Layout, QR display, protected route, forms
+├── pages/        # Route-level screens
+├── context/      # Auth and registration session context
+├── services/     # Axios API client
+├── hooks/        # Socket.IO hook
+├── utils/        # Token helpers
+└── types/        # Shared TypeScript types
 ```
 
-### WebSocket Configuration
+## Auth behavior
 
-WebSocket connection is configured in `src/hooks/useSocket.ts`:
-```typescript
-const newSocket = io('http://localhost:4000');
-```
+1. Login stores tokens for the Axios client and uses credentialed cookies where the backend sets them.
+2. On `401`/`403`, the client attempts refresh, then retries the request.
+3. Failed refresh clears local session and returns to `/login`.
 
-## 📱 Pages & Features
+## Working with the backend
 
-### Public Pages
+1. Start MongoDB and the backend (`npm run dev` in the backend repo).
+2. Seed an admin user on the backend.
+3. Set frontend `.env` URLs to match the backend port.
+4. Ensure backend `CLINIC_CORS_ORIGIN` includes `VITE_CLINIC_CLIENT_URL`.
 
-1. **Login Page** (`/login`)
-   - Staff and Admin authentication
-   - Form validation with Ant Design
-   - Automatic redirect after login
+## Scope notes
 
-2. **Registration Page** (`/register`)
-   - Patient registration form
-   - Accessible via QR code token
-   - Form validation and submission
+This UI focuses on walk-in QR registration and light clinical follow-up. It does not include appointment scheduling, billing, or a logged-in patient portal.
 
-### Protected Pages
+## License
 
-1. **Dashboard** (`/dashboard`)
-   - Real-time QR code display
-   - Connection status monitoring
-   - Quick action buttons
-
-2. **File Manager** (`/file-manager`)
-   - Upload files, images, and URLs
-   - Generate QR codes for files
-   - Download QR codes as images
-   - File organization and search
-   - QR code scanning functionality
-
-3. **Registration Management** (`/registrations`)
-   - View all patient registrations
-   - Search and filter functionality
-   - Date range filtering
-
-4. **QR Scanner** (`/scan`)
-   - Device and doctor selection
-   - QR code scanning interface
-   - Registration setup
-
-5. **User Management** (`/users`) - Admin Only
-   - Create/delete user accounts
-   - Role management
-   - User list with actions
-
-6. **Device Management** (`/devices`) - Admin Only
-   - Manage clinic devices
-   - Device status tracking
-   - Device assignments
-
-## 🔐 Authentication Flow
-
-1. **Login**: User submits credentials
-2. **Token Storage**: Access and refresh tokens stored in localStorage
-3. **API Calls**: Axios interceptor automatically adds auth headers
-4. **Token Refresh**: Automatic refresh on 401 responses
-5. **Logout**: Clear tokens and redirect to login
-
-## 🔄 Real-time Updates
-
-- WebSocket connection to backend
-- Automatic QR code updates via `NEW_QR` event
-- Connection status monitoring
-- Automatic reconnection handling
-
-## 🎨 Styling
-
-- **Ant Design**: Pre-built components and themes
-- **TailwindCSS**: Utility-first CSS for custom styling
-- **Responsive Design**: Mobile-first approach
-- **Custom Components**: Reusable UI components
-
-## 🚀 Deployment
-
-1. Build the project:
-```bash
-npm run build
-```
-
-2. Deploy the `dist` folder to your hosting service
-
-## 🔧 Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-### Code Structure
-
-- **Components**: Reusable UI components
-- **Pages**: Route-level components
-- **Services**: API and external service integration
-- **Hooks**: Custom React hooks
-- **Context**: Global state management
-- **Utils**: Helper functions
-
+MIT
