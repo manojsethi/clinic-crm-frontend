@@ -22,28 +22,37 @@ export const useSocket = () => {
     const currentRoomRef = useRef<string | null>(null);
 
     useEffect(() => {
-       
-        const newSocket = io(import.meta.env.VITE_CLINIC_BACKEND_URL, {
+        const backendUrl = import.meta.env.VITE_CLINIC_BACKEND_URL;
+        console.log('[SOCKET] connecting to', backendUrl);
+
+        const newSocket = io(backendUrl, {
             transports: ['websocket'],
         });
 
         newSocket.on('connect', () => {
+            console.log('[SOCKET] connected', newSocket.id);
             setIsConnected(true);
         });
 
-        newSocket.on('disconnect', () => {
+        newSocket.on('disconnect', (reason) => {
+            console.warn('[SOCKET] disconnected', reason);
             setIsConnected(false);
             setCurrentRoom(null);
+            currentRoomRef.current = null;
+        });
+
+        newSocket.on('connect_error', (err) => {
+            console.error('[SOCKET] connect_error', err.message, { backendUrl });
         });
 
         newSocket.on('NEW_QR', (data: SocketEventData) => {
-            console.log('📡 [FRONTEND] Received NEW_QR event:', { 
-                roomId: data.roomId, 
+            console.log('📡 [FRONTEND] Received NEW_QR event:', {
+                roomId: data.roomId,
                 currentRoom: currentRoomRef.current,
                 hasQR: !!data.qr,
                 qrValue: data.qr
             });
-            
+
             // Update QR ONLY if roomId matches current room (room-based targeting)
             if (data.roomId && data.roomId === currentRoomRef.current) {
                 console.log('✅ [FRONTEND] Updating QR from socket event - room match, setting QR to:', data.qr);
@@ -88,6 +97,11 @@ export const useSocket = () => {
             const uniqueId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const roomId = `device_${deviceId}_doctor_${doctorId}_screen_${uniqueId}`;
             socket.emit('JOIN_ROOM', { roomId });
+        } else {
+            console.warn('[SOCKET] joinDeviceDoctorRoom skipped — not connected', {
+                hasSocket: !!socket,
+                isConnected,
+            });
         }
     }, [socket, isConnected]);
 
@@ -111,10 +125,10 @@ export const useSocket = () => {
         }
     }, [socket, isConnected, currentRoom]);
 
-    return { 
-        socket, 
-        qr, 
-        isConnected, 
+    return {
+        socket,
+        qr,
+        isConnected,
         currentRoom,
         joinRoom,
         joinDeviceDoctorRoom,
